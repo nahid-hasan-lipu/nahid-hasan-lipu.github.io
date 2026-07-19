@@ -157,9 +157,6 @@ body.no-webgl {
 }
 
 @media (max-width: 780px) {
-  #scroll-arrows {
-    right: 0.6rem;
-  }
   #scroll-arrows button {
     width: 34px;
     height: 34px;
@@ -388,6 +385,15 @@ p {
     padding: 5rem 1.2rem;
     justify-content: center;
   }
+  /* The first/hero beat on each page can hold enough content to exceed
+     the viewport on short phones — centering it vertically then risks
+     pushing its top edge up under the fixed nav bar. Anchor it to the
+     top instead, with enough clearance for the (taller, 2-row) mobile
+     nav, so tall content grows downward rather than overlapping the nav. */
+  .beat:first-child {
+    align-items: flex-start;
+    padding-top: 7.5rem;
+  }
   .content-card,
   .content-card--left,
   .content-card--right {
@@ -400,6 +406,26 @@ p {
   }
   #nav-links {
     gap: 0.8rem 1rem;
+  }
+  /* Move off the card's right edge — on narrow screens the card runs
+     nearly full-width, so a right-edge vertical control collides with
+     its text. Bottom-center, laid out horizontally, is also easier to
+     reach with a thumb. */
+  #scroll-arrows {
+    top: auto;
+    right: auto;
+    bottom: 0.8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(6, 8, 12, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+  }
+  #scroll-indicator {
+    writing-mode: horizontal-tb;
   }
 }
 
