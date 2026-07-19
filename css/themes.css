@@ -1,0 +1,44 @@
+/* Each page gets its own accent hue + background tint via body[data-theme].
+   Keeps every page visually distinct while sharing the same component styles. */
+
+body[data-theme="home"] {
+  --bg: #0a0d12;
+  --accent: #5b8cff;
+  --accent-soft: rgba(91, 140, 255, 0.16);
+  --card-bg: rgba(15, 20, 28, 0.62);
+}
+
+body[data-theme="personal"] {
+  --bg: #150f0a;
+  --accent: #ffb454;
+  --accent-soft: rgba(255, 180, 84, 0.16);
+  --card-bg: rgba(28, 20, 12, 0.62);
+}
+
+body[data-theme="education"] {
+  --bg: #081414;
+  --accent: #3ddc97;
+  --accent-soft: rgba(61, 220, 151, 0.16);
+  --card-bg: rgba(10, 26, 24, 0.62);
+}
+
+body[data-theme="skills"] {
+  --bg: #120a1f;
+  --accent: #a78bfa;
+  --accent-soft: rgba(167, 139, 250, 0.16);
+  --card-bg: rgba(22, 14, 34, 0.62);
+}
+
+body[data-theme="projects"] {
+  --bg: #0a1014;
+  --accent: #4dd0e1;
+  --accent-soft: rgba(77, 208, 225, 0.16);
+  --card-bg: rgba(12, 22, 26, 0.62);
+}
+
+body[data-theme="contact"] {
+  --bg: #170a0d;
+  --accent: #ff6b81;
+  --accent-soft: rgba(255, 107, 129, 0.16);
+  --card-bg: rgba(28, 14, 17, 0.62);
+}

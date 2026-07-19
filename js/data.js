@@ -1,12 +1,13 @@
-// Portfolio content — all copy verified against each project's own README.
-// Edit here to update card content; index.html and app.js read from this file.
+// Portfolio content — all copy verified against source documents (academic
+// certificates, project READMEs). Edit here to update site content; the
+// per-page render*.js files read from this file, nothing is hardcoded in HTML.
 
 export const profile = {
   name: "Nahid Hasan Lipu",
   title: "Data Analytics Postgraduate",
   location: "Auckland, New Zealand",
   tagline:
-    "Master of Applied Technologies (Data Analytics), Unitec Institute of Technology — with a Computer Science & Engineering background and two and a half years of hands-on data work inside a live US healthcare EHR system.",
+    "Master of Applied Technologies (Data Analytics), Unitec Institute of Technology, Auckland — with a Computer Science & Engineering background and two and a half years of hands-on data work inside a live US healthcare EHR system.",
   about:
     "I turn messy, real-world data into decisions. My background bridges Computer Science & Engineering with two and a half years working hands-on inside a live US healthcare EHR system at Augmedix, followed by a Master's in Data Analytics at Unitec in Auckland. Every project on this site uses real public or official datasets, cleaned and analysed end-to-end in Python, with interactive dashboards in Streamlit and Power BI. I'm open to data analytics roles across any domain — business, financial, or healthcare — in New Zealand.",
   email: "lipunahidhasan@gmail.com",
@@ -14,11 +15,61 @@ export const profile = {
   linkedin: "https://www.linkedin.com/in/nahid-hasan-lipu-922447355/",
 };
 
-export const skills = [
-  "Python", "pandas", "NumPy", "scikit-learn", "SQL", "Power BI",
-  "Streamlit", "Matplotlib", "Plotly", "Statistical Analysis",
-  "Machine Learning", "Git / GitHub",
+export const personalInfo = {
+  nationality: "Bangladeshi",
+  workRights: "Post-Study Work Visa (3 years, open work permit) — full NZ work rights, no employer sponsorship required",
+  location: "Auckland, New Zealand",
+  languages: ["Bengali (native)", "English (fluent)", "Hindi"],
+  interests: ["Badminton", "Chess & strategy puzzles", "Photography", "Exploring New Zealand's outdoors"],
+};
+
+export const education = [
+  {
+    period: "Feb 2025 — Jul 2026",
+    degree: "Master of Applied Technologies (Data Analytics)",
+    institution: "Unitec Institute of Technology, Auckland, New Zealand",
+    detail: "Thesis: \"Procedural Fairness in HR Machine Learning\" — submitted, results pending.",
+  },
+  {
+    period: "Graduated 2021",
+    degree: "Bachelor of Science, Computer Science & Engineering",
+    institution: "Daffodil International University, Dhaka, Bangladesh",
+    detail: "CGPA 3.43 / 4.0, Faculty of Science and Information Technology.",
+  },
+  {
+    period: "2016",
+    degree: "Higher Secondary Certificate (HSC), Science",
+    institution: "Savar Cantonment Public School and College, Dhaka, Bangladesh",
+    detail: "GPA 5.00 / 5.00",
+  },
+  {
+    period: "2014",
+    degree: "Secondary School Certificate (SSC), Science",
+    institution: "Biralia High School, Dhaka, Bangladesh",
+    detail: "GPA 5.00 / 5.00",
+  },
 ];
+
+export const skillGroups = [
+  {
+    category: "Programming & Data",
+    items: ["Python", "pandas", "NumPy", "SQL"],
+  },
+  {
+    category: "Analytics & Machine Learning",
+    items: ["scikit-learn", "Statistical Analysis", "Machine Learning"],
+  },
+  {
+    category: "BI & Visualization",
+    items: ["Power BI", "Streamlit", "Matplotlib", "Plotly"],
+  },
+  {
+    category: "Tools",
+    items: ["Git / GitHub"],
+  },
+];
+
+export const skills = skillGroups.flatMap((g) => g.items);
 
 export const projects = [
   {
@@ -129,4 +180,13 @@ export const projects = [
     repo: "https://github.com/nahid-hasan-lipu/online-shopper-purchase-intent",
     powerbi: false,
   },
+];
+
+export const pages = [
+  { id: "home", label: "Home", href: "index.html" },
+  { id: "personal", label: "Personal Info", href: "personal.html" },
+  { id: "education", label: "Education", href: "education.html" },
+  { id: "skills", label: "Skills", href: "skills.html" },
+  { id: "projects", label: "Projects", href: "projects.html" },
+  { id: "contact", label: "Contact", href: "contact.html" },
 ];

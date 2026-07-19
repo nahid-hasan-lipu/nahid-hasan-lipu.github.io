@@ -1,13 +1,8 @@
 :root {
-  --bg: #0a0d12;
-  --bg-alt: #0f141c;
-  --accent: #5b8cff;
-  --accent-soft: rgba(91, 140, 255, 0.16);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --text: #eef1f6;
   --text-muted: #9aa4b6;
   --border: rgba(255, 255, 255, 0.09);
-  --card-bg: rgba(15, 20, 28, 0.62);
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 * {
@@ -25,6 +20,7 @@ body {
   font-family: var(--font);
   line-height: 1.55;
   overflow-x: hidden;
+  transition: background 0.4s ease;
 }
 
 #canvas-container {
@@ -44,7 +40,7 @@ body.no-webgl #canvas-container {
 }
 
 body.no-webgl {
-  background: radial-gradient(ellipse at top, #10161f 0%, #0a0d12 60%);
+  background: radial-gradient(ellipse at top, color-mix(in srgb, var(--bg) 80%, white 6%), var(--bg) 60%);
 }
 
 #progress-track {
@@ -74,7 +70,7 @@ body.no-webgl {
   align-items: center;
   justify-content: space-between;
   padding: 1.1rem 2rem;
-  background: linear-gradient(to bottom, rgba(10, 13, 18, 0.85), transparent);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent);
   backdrop-filter: blur(6px);
 }
 
@@ -88,18 +84,26 @@ body.no-webgl {
 
 #nav-links {
   display: flex;
-  gap: 1.6rem;
+  flex-wrap: wrap;
+  gap: 1.4rem;
 }
 
 #nav-links a {
   color: var(--text-muted);
   text-decoration: none;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   transition: color 0.2s ease;
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
 }
 
 #nav-links a:hover {
   color: var(--text);
+}
+
+#nav-links a.is-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 #content {
@@ -114,10 +118,7 @@ body.no-webgl {
   padding: 6rem 2rem;
 }
 
-.beat--hero {
-  min-height: 100vh;
-}
-
+/* Shared glass card, reused as the base for page-specific card variants */
 .content-card {
   max-width: 500px;
   background: var(--card-bg);
@@ -149,6 +150,10 @@ body.no-webgl {
   text-align: center;
 }
 
+.content-card--wide {
+  max-width: 860px;
+}
+
 .eyebrow {
   color: var(--accent);
   text-transform: uppercase;
@@ -170,9 +175,19 @@ h2 {
   letter-spacing: -0.01em;
 }
 
+h3 {
+  font-size: 1.1rem;
+  margin: 0 0 0.6rem;
+}
+
+.tagline,
+.summary,
+p {
+  color: var(--text-muted);
+}
+
 .tagline,
 .summary {
-  color: var(--text-muted);
   font-size: 1.02rem;
   margin: 0 0 1.4rem;
 }
@@ -208,8 +223,8 @@ h2 {
 
 .chip--accent {
   background: var(--accent-soft);
-  border-color: rgba(91, 140, 255, 0.35);
-  color: #cddcff;
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--text);
 }
 
 .btn-row {
@@ -250,7 +265,7 @@ h2 {
 }
 
 .btn--primary:hover {
-  background: #7aa2ff;
+  filter: brightness(1.12);
 }
 
 .scroll-cue {
@@ -290,7 +305,7 @@ h2 {
     padding: 0.9rem 1.2rem;
   }
   #nav-links {
-    gap: 1rem;
+    gap: 0.8rem 1rem;
   }
 }
 
