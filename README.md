@@ -2,23 +2,22 @@
 
 Live site: **https://nahid-hasan-lipu.github.io/**
 
-A 6-page portfolio, each page with its own colour theme and its own
-scroll-driven Three.js 3D world — scrolling moves the camera through the
-scene one "beat" at a time, each beat surfacing one card:
+A 6-page portfolio, each page with its own colour theme. Three pages are
+single-view (a calm, always-animating scene with mouse parallax); three are
+scroll-driven Three.js corridors (scrolling moves the camera through the
+scene one "beat" at a time, each beat surfacing one card):
 
 | Page | Theme | Scene |
 |---|---|---|
-| Home (`index.html`) | Indigo | A real deep-space photo backdrop; camera orbits an always-animating 3D sun, one 3D planet per destination page |
-| Personal Info (`personal.html`) | Amber | A real tree-canopy photo backdrop with subtle scroll-driven parallax; each info card is anchored to a specific branch, with 3D birds and fireflies flying over the photo |
-| Education (`education.html`) | Teal | A road trip — camera drives down a glowing highway, a lamp-post marker at each stage, low-poly hills passing by |
-| Skills (`skills.html`) | Violet | A real mountain-and-sea photo backdrop with a single genuine 3D hexagonal prism at centre — it rotates as you scroll, one of its 6 faces (and one skill category) coming forward per beat |
-| Projects (`projects.html`) | Cyan | A corridor — the camera moves past a glowing installation for each of the 9 projects |
-| Contact (`contact.html`) | Rose | A pulsing beacon with orbiting satellites and signal particles drifting inward (kept as a single view — only 3-4 short items, no scroll journey needed) |
+| Home (`index.html`) | Indigo | Single view — a pulsing core with an orbiting satellite for each destination page, signal particles, mouse parallax (same mechanic as Contact, re-themed) |
+| Personal Info (`personal.html`) | Amber | Scroll corridor — camera moves past a glowing panel for each of the 5 personal-info details (same mechanic as Projects, re-themed) |
+| Education (`education.html`) | Teal | Scroll corridor — camera drives down a glowing highway, a lamp-post marker at each schooling stage, low-poly hills passing by |
+| Skills (`skills.html`) | Violet | Scroll corridor — a forest walk, camera moves past a marker tree for each of the 6 skill categories, birds flying and fireflies drifting throughout |
+| Projects (`projects.html`) | Cyan | Scroll corridor — camera moves past a glowing installation for each of the 9 projects |
+| Contact (`contact.html`) | Rose | Single view — a pulsing beacon with orbiting satellites and signal particles drifting inward (only 3-4 short items, no scroll journey needed) |
 
-Home, Personal Info, and Skills use real photographs (Pexels License — free
-for commercial use, no attribution required) rather than procedurally-drawn
-skies, layered with genuine 3D elements (planets, birds, the hexagon) on top.
-Education and Projects remain fully procedural 3D environments.
+All scenes are fully procedural (drawn gradients, canvas-noise textures,
+layered additive-blend glow) — no external image assets.
 
 Every scroll-driven page has fixed forward/back arrows (jump one beat at a
 time) with a position readout, and every page has a "← Back" button in the
@@ -55,9 +54,7 @@ web portpholio/
 │                          its own 3D scene visuals
 │       ├── home.js, personal.js, education.js,
 │       └── skills.js, projects.js, contact.js
-└── assets/
-    └── images/            galaxy.jpg, mountain-sea.jpg, tree-canopy.jpg —
-                            real photos used as backdrops (see above)
+└── assets/               (currently unused — all visuals are built from code)
 ```
 
 ## Editing content

@@ -1,6 +1,6 @@
-import { THREE, addBaseLighting, createBeatPath, initPageScene, initCardFocus, loadPhotoBackground, addGlowLayers, makeNoiseTexture } from "../core.js";
+import { THREE, addBaseLighting, attachMouseParallax, initPageScene, setupReveal, makeSkyGradientTexture, addGlowLayers } from "../core.js";
 import { profile } from "../data.js";
-import { renderNav, initProgressBar, initScrollArrows, icons } from "../nav.js";
+import { renderNav, initProgressBar, icons } from "../nav.js";
 
 renderNav("home");
 initProgressBar();
@@ -11,7 +11,7 @@ document.getElementById("hero-links").innerHTML = `
   <a class="btn" href="${profile.linkedin}" target="_blank" rel="noopener">${icons.linkedin}<span>LinkedIn</span></a>
 `;
 
-const planetCards = [
+const navCards = [
   {
     href: "personal.html",
     color: 0xffb454,
@@ -49,134 +49,107 @@ const planetCards = [
   },
 ];
 
-const beatCount = 1 + planetCards.length;
-
-document.getElementById("planet-beats").innerHTML = planetCards
+document.getElementById("nav-grid").innerHTML = navCards
   .map(
-    (p, i) => `
-    <section class="beat" id="planet-${i}">
-      <div class="content-card content-card--center" data-reveal>
-        <span class="nav-card-icon" style="margin:0 auto 1rem;">${p.icon}</span>
-        <p class="eyebrow">Destination ${i + 1} of ${planetCards.length}</p>
-        <h2>${p.title}</h2>
-        <p class="summary">${p.desc}</p>
-        <a class="btn btn--primary" href="${p.href}">Explore ${p.title} →</a>
-      </div>
-    </section>`
+    (c) => `
+    <a class="nav-card" href="${c.href}">
+      <span class="nav-card-icon">${c.icon}</span>
+      <h3>${c.title}</h3>
+      <p>${c.desc}</p>
+    </a>`
   )
   .join("");
 
-initCardFocus();
-initScrollArrows(beatCount);
+setupReveal();
 
-// A sun the camera slowly orbits as you scroll, with one planet per
-// destination page parked around it — the sun and starfield animate
-// continuously on their own; the planets brighten as their beat comes
-// into focus. Backdrop is a real deep-space photograph (twin spiral
-// galaxies), not a drawn gradient.
-initPageScene({ bgColor: 0x05060c, fogNear: 20, fogFar: 60 }, ({ scene, camera, renderer }) => {
-  addBaseLighting(scene, camera, { skyColor: 0xffe3b0, groundColor: 0x05060c, accent: 0xffcc55 });
+// A single pulsing core with an orbiting satellite for each destination
+// page — the same calm, single-view mechanic as the Contact page's beacon,
+// just re-themed and pointed at navigation instead of contact methods.
+initPageScene({ bgColor: 0x05060c, fogNear: 6, fogFar: 26 }, ({ scene, camera, renderer }) => {
+  addBaseLighting(scene, camera, { skyColor: 0x8fb3ff, groundColor: 0x05060c, accent: 0x5b8cff });
 
-  loadPhotoBackground(scene, "assets/images/galaxy.jpg");
+  scene.background = makeSkyGradientTexture([
+    [0, "#020103"],
+    [0.5, "#0a0d18"],
+    [0.8, "#141a2e"],
+    [1, "#05060c"],
+  ]);
 
-  // Starfield — two depth layers for parallax richness
-  function starLayer(count, spread, size, color, opacity) {
-    const positions = new Float32Array(count * 3);
-    for (let i = 0; i < count; i += 1) {
-      positions[i * 3] = (Math.random() - 0.5) * spread;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * spread * 0.6;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * spread;
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const pts = new THREE.Points(geo, new THREE.PointsMaterial({ color, size, transparent: true, opacity, sizeAttenuation: true }));
-    scene.add(pts);
-    return pts;
-  }
-  const farStars = starLayer(700, 90, 0.09, 0xffffff, 0.65);
-  const nearStars = starLayer(180, 45, 0.16, 0x9fc4ff, 0.85);
-
-  // Sun — noise-textured surface (not a flat color) plus layered additive
-  // glow instead of a single translucent sphere, so it reads as a real
-  // light source rather than a flat-shaded primitive.
-  const sunTexture = makeNoiseTexture("#4a2a08", "#ffd27a", { spots: 90 });
-  const sun = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(1.7, 3),
-    new THREE.MeshStandardMaterial({ map: sunTexture, emissive: 0xffcc55, emissiveMap: sunTexture, emissiveIntensity: 1.1, roughness: 0.5 })
+  const core = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 32, 32),
+    new THREE.MeshStandardMaterial({ color: 0x12162a, emissive: 0x5b8cff, emissiveIntensity: 0.55, roughness: 0.35 })
   );
-  scene.add(sun);
-  const sunGlowGroup = addGlowLayers(scene, { position: new THREE.Vector3(0, 0, 0), color: 0xffcc55, baseRadius: 1.8, layers: 4 });
+  scene.add(core);
+  const coreGlow = addGlowLayers(scene, { position: new THREE.Vector3(0, 0, 0), color: 0x5b8cff, baseRadius: 1, layers: 4 });
 
-  const orbitRadius = 10;
-  const angleSpan = Math.PI * 1.25;
-  const startAngle = -angleSpan / 2;
+  const ringGeo = new THREE.RingGeometry(1.3, 1.35, 64);
+  const rings = [0, 1, 2].map((i) => {
+    const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0x5b8cff, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
+    ring.rotation.x = Math.PI / 2;
+    scene.add(ring);
+    return { ring, offset: i * 1.6 };
+  });
 
-  function angleForBeat(i) {
-    return startAngle + (i / (beatCount - 1)) * angleSpan;
+  const count = 160;
+  const positions = new Float32Array(count * 3);
+  const radii = new Float32Array(count);
+  const angles = new Float32Array(count);
+  for (let i = 0; i < count; i += 1) {
+    radii[i] = 4 + Math.random() * 8;
+    angles[i] = Math.random() * Math.PI * 2;
+    positions[i * 3] = Math.cos(angles[i]) * radii[i];
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 6;
+    positions[i * 3 + 2] = Math.sin(angles[i]) * radii[i] - 6;
   }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const signals = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x9fc4ff, size: 0.06, transparent: true, opacity: 0.7 }));
+  scene.add(signals);
 
-  // Camera orbits the sun; each beat sits at one step around the arc
-  const curve = createBeatPath(beatCount, (i) => {
-    const angle = angleForBeat(i);
-    return new THREE.Vector3(Math.cos(angle) * orbitRadius, 2.2 + Math.sin(i * 0.7) * 0.5, Math.sin(angle) * orbitRadius);
+  // Orbiting satellites — one per destination page, coloured to match
+  const satellites = navCards.map((c, i) => {
+    const sat = new THREE.Mesh(
+      new THREE.SphereGeometry(0.16, 16, 16),
+      new THREE.MeshStandardMaterial({ color: c.color, emissive: c.color, emissiveIntensity: 0.6 })
+    );
+    scene.add(sat);
+    return { sat, radius: 2.6 + i * 0.55, speed: 0.28 + i * 0.06, phase: i * 1.3, tilt: (i / navCards.length) * Math.PI };
   });
 
-  const planets = planetCards.map((p, j) => {
-    const beatIndex = j + 1;
-    // Offset slightly from the camera's exact angle at this beat so the
-    // planet doesn't sit dead-centre between camera and sun (which made
-    // it balloon in size and sit right behind the card).
-    const angle = angleForBeat(beatIndex) + (j % 2 === 0 ? 0.22 : -0.22);
-    const radius = 5.6;
-    const group = new THREE.Group();
-    group.position.set(Math.cos(angle) * radius, 1.2, Math.sin(angle) * radius);
+  camera.position.set(0, 1.2, 8);
+  const basePosition = new THREE.Vector3(0, 1.2, 8);
+  const parallax = attachMouseParallax(camera, basePosition, 0.9);
 
-    const planetTexture = makeNoiseTexture(`#${p.color.toString(16).padStart(6, "0")}`, "#ffffff", { spots: 40 });
-    const planet = new THREE.Mesh(
-      new THREE.SphereGeometry(0.5, 24, 24),
-      new THREE.MeshStandardMaterial({ map: planetTexture, color: p.color, emissive: p.color, emissiveIntensity: 0.35, roughness: 0.55 })
-    );
-    group.add(planet);
-    addGlowLayers(group, { position: new THREE.Vector3(0, 0, 0), color: p.color, baseRadius: 0.5, layers: 2 });
-
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(1, 0.03, 8, 48),
-      new THREE.MeshBasicMaterial({ color: p.color, transparent: true, opacity: 0.35 })
-    );
-    ring.rotation.x = Math.PI / 2.4;
-    group.add(ring);
-
-    scene.add(group);
-    return { group, planet, beatIndex, baseScale: 1 };
-  });
-
-  const sunTarget = new THREE.Vector3(0, 1.4, 0);
   const clock = new THREE.Clock();
-
-  function update() {
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    const t = max > 0 ? THREE.MathUtils.clamp(window.scrollY / max, 0, 1) : 0;
-    const beatFloat = t * (beatCount - 1);
-
-    camera.position.copy(curve.getPointAt(t));
-    camera.lookAt(sunTarget);
-
-    planets.forEach(({ group, beatIndex }) => {
-      const proximity = Math.max(0, 1 - Math.abs(beatFloat - beatIndex));
-      const scale = 1 + proximity * 0.35;
-      group.scale.setScalar(scale);
-    });
-  }
-
   function animate() {
     const t = clock.getElapsedTime();
-    sun.rotation.y = t * 0.15;
-    sun.rotation.x = t * 0.08;
-    sunGlowGroup.scale.setScalar(1 + Math.sin(t * 1.2) * 0.05);
-    farStars.rotation.y = t * 0.004;
-    nearStars.rotation.y = -t * 0.008;
+    const pulse = 1 + Math.sin(t * 1.2) * 0.06;
+    core.scale.setScalar(pulse);
+    coreGlow.scale.setScalar(pulse);
+    core.rotation.y = t * 0.1;
 
-    update();
+    rings.forEach(({ ring, offset }) => {
+      const local = (t * 0.5 + offset) % 4.8;
+      const scale = 1 + local;
+      ring.scale.setScalar(scale);
+      ring.material.opacity = Math.max(0, 0.5 - local / 4.8);
+    });
+
+    const posAttr = geo.getAttribute("position");
+    for (let i = 0; i < count; i += 1) {
+      radii[i] -= 0.01;
+      if (radii[i] < 1.4) radii[i] = 11;
+      posAttr.setX(i, Math.cos(angles[i]) * radii[i]);
+      posAttr.setZ(i, Math.sin(angles[i]) * radii[i] - 6);
+    }
+    posAttr.needsUpdate = true;
+
+    satellites.forEach(({ sat, radius, speed, phase, tilt }) => {
+      const angle = t * speed + phase;
+      sat.position.set(Math.cos(angle) * radius, Math.sin(tilt) * Math.sin(angle) * radius * 0.4, Math.sin(angle) * radius * Math.cos(tilt));
+    });
+
+    parallax();
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   }

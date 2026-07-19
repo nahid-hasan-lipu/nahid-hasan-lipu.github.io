@@ -23,19 +23,6 @@ body {
   transition: background 0.4s ease;
 }
 
-/* A real photo backdrop, used on pages that pair genuine photography with
-   a transparent 3D overlay instead of a fully procedural scene. Sized
-   slightly larger than the viewport so a subtle scroll-driven pan/zoom
-   (applied inline by the page script) never reveals an edge. */
-#photo-bg {
-  position: fixed;
-  inset: -6%;
-  z-index: -1;
-  background-size: cover;
-  background-position: center;
-  transition: transform 0.2s ease-out;
-}
-
 #canvas-container {
   position: fixed;
   inset: 0;

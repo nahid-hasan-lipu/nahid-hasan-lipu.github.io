@@ -1,4 +1,4 @@
-import { THREE, addBaseLighting, initPageScene, initCardFocus, loadPhotoBackground, addGlowLayers } from "../core.js";
+import { THREE, addBaseLighting, createBeatPath, createScrollCameraUpdater, initPageScene, initCardFocus, makeSkyGradientTexture, makeNoiseTexture } from "../core.js";
 import { skillGroups } from "../data.js";
 import { renderNav, initProgressBar, initScrollArrows } from "../nav.js";
 
@@ -6,10 +6,10 @@ renderNav("skills");
 initProgressBar();
 
 const ACCENT = 0xa78bfa;
-const FACE_COLORS = [0xa78bfa, 0x8f6bf0, 0xc0a8ff, 0x9370f5, 0xb69aff, 0x7c5ce8];
+const SPACING = 16;
 const beatCount = 1 + skillGroups.length;
 
-document.getElementById("hex-beats").innerHTML = skillGroups
+document.getElementById("skill-beats").innerHTML = skillGroups
   .map((g, i) => {
     const side = i % 2 === 0 ? "right" : "left";
     return `
@@ -28,122 +28,155 @@ document.getElementById("hex-beats").innerHTML = skillGroups
 initCardFocus();
 initScrollArrows(beatCount);
 
-function makeFaceTexture(number, color) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 256;
-  canvas.height = 256;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = `#${color.toString(16).padStart(6, "0")}`;
-  ctx.fillRect(0, 0, 256, 256);
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
-  ctx.font = "700 120px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(String(number), 128, 138);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
+const barkTexture = makeNoiseTexture("#1e1730", "#3a2c5a", { size: 64, spots: 30 });
+const foliageTexture = makeNoiseTexture("#211640", "#8f6bf0", { size: 96, spots: 70 });
 
-// A single 3D hexagonal prism that rotates as you scroll — each of its 6
-// side faces takes its turn facing the camera, one per skill category,
-// floating over a real photographed mountain-and-sea backdrop.
-function buildHexagon() {
-  const radius = 2.4;
-  const depth = 1.6;
-  const geometry = new THREE.CylinderGeometry(radius, radius, depth, 6, 1, false);
-
-  // CylinderGeometry writes side-face indices first (6 quads = 36 indices
-  // for a 6-sided prism), then the top cap, then the bottom cap — split
-  // the single "sides" group into 6 groups so each face can take its own
-  // material.
-  geometry.clearGroups();
-  for (let face = 0; face < 6; face += 1) {
-    geometry.addGroup(face * 6, 6, face);
-  }
-  const sideIndexCount = 6 * 6;
-  const capIndexCount = (geometry.index.count - sideIndexCount) / 2;
-  geometry.addGroup(sideIndexCount, capIndexCount, 6);
-  geometry.addGroup(sideIndexCount + capIndexCount, capIndexCount, 7);
-
-  const faceMaterials = FACE_COLORS.map(
-    (color, i) =>
-      new THREE.MeshStandardMaterial({
-        map: makeFaceTexture(i + 1, color),
-        emissive: color,
-        emissiveIntensity: 0.35,
-        roughness: 0.35,
-        metalness: 0.25,
-      })
+// Organic canopy — a cluster of overlapping, irregularly offset blobs
+// instead of a clean geometric shape, so the silhouette reads as a real tree.
+function buildTree(scale = 1) {
+  const group = new THREE.Group();
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.1 * scale, 0.22 * scale, 1.7 * scale, 7),
+    new THREE.MeshStandardMaterial({ map: barkTexture, roughness: 0.95 })
   );
-  const capMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1430, roughness: 0.5, metalness: 0.3 });
+  trunk.position.y = 0.85 * scale;
+  group.add(trunk);
 
-  const hexagon = new THREE.Mesh(geometry, [...faceMaterials, capMaterial, capMaterial]);
-  return hexagon;
+  const foliageMat = new THREE.MeshStandardMaterial({ map: foliageTexture, emissive: ACCENT, emissiveIntensity: 0.15, roughness: 0.8 });
+  const blobCount = 5;
+  for (let i = 0; i < blobCount; i += 1) {
+    const blobScale = (0.75 + Math.random() * 0.55) * scale;
+    const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(blobScale, 0), foliageMat);
+    blob.position.set(
+      (Math.random() - 0.5) * 0.9 * scale,
+      (1.7 + Math.random() * 1.3) * scale,
+      (Math.random() - 0.5) * 0.9 * scale
+    );
+    blob.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    group.add(blob);
+  }
+  return group;
 }
 
-initPageScene({ bgColor: 0x120a1f, fogNear: 18, fogFar: 40 }, ({ scene, camera, renderer }) => {
+function buildBird() {
+  const group = new THREE.Group();
+  const wingMat = new THREE.MeshBasicMaterial({ color: 0x120c1f, side: THREE.DoubleSide });
+  const wingShape = new THREE.BufferGeometry();
+  const verts = new Float32Array([0, 0, 0, 0.35, 0.12, 0, 0.7, 0, 0]);
+  wingShape.setAttribute("position", new THREE.BufferAttribute(verts, 3));
+  wingShape.setIndex([0, 1, 2]);
+  const left = new THREE.Mesh(wingShape, wingMat);
+  const right = new THREE.Mesh(wingShape, wingMat);
+  right.scale.x = -1;
+  group.add(left, right);
+  return group;
+}
+
+initPageScene({ bgColor: 0x120a1f, fogNear: 6, fogFar: 30 }, ({ scene, camera, renderer }) => {
   addBaseLighting(scene, camera, { skyColor: 0xd8b9ff, groundColor: 0x120a1f, accent: ACCENT });
 
-  loadPhotoBackground(scene, "assets/images/mountain-sea.jpg");
+  scene.background = makeSkyGradientTexture([
+    [0, "#05030c"],
+    [0.5, "#0f0a20"],
+    [0.8, "#1c1436"],
+    [1, "#2a1c42"],
+  ]);
 
-  const hexagon = buildHexagon();
-  scene.add(hexagon);
+  const totalLength = (beatCount - 1) * SPACING;
 
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(2.55, 0.045, 8, 6), new THREE.MeshBasicMaterial({ color: ACCENT }));
-  rim.rotation.x = Math.PI / 2;
-  scene.add(rim);
+  const groundTexture = makeNoiseTexture("#140c26", "#241640", { size: 128, spots: 90 });
+  groundTexture.wrapS = THREE.RepeatWrapping;
+  groundTexture.wrapT = THREE.RepeatWrapping;
+  groundTexture.repeat.set(8, (totalLength + 60) / 8);
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(50, totalLength + 60),
+    new THREE.MeshStandardMaterial({ map: groundTexture, roughness: 1 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.set(0, -1.6, -totalLength / 2 + 10);
+  scene.add(ground);
 
-  addGlowLayers(scene, { position: new THREE.Vector3(0, 0, 0), color: ACCENT, baseRadius: 1.7, layers: 2 });
-
-  // A little ambient dust drifting past, so the scene isn't perfectly static
-  const dustCount = 140;
-  const dustPos = new Float32Array(dustCount * 3);
-  for (let i = 0; i < dustCount; i += 1) {
-    dustPos[i * 3] = (Math.random() - 0.5) * 16;
-    dustPos[i * 3 + 1] = (Math.random() - 0.5) * 10;
-    dustPos[i * 3 + 2] = (Math.random() - 0.5) * 10 - 2;
+  // Dense background trees for forest depth
+  for (let i = -2; i < beatCount + 2; i += 1) {
+    for (let s = 0; s < 3; s += 1) {
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const tree = buildTree(0.7 + Math.random() * 0.8);
+      tree.position.set(side * (4 + Math.random() * 10), -1.6, -i * SPACING + (Math.random() - 0.5) * SPACING);
+      scene.add(tree);
+    }
   }
-  const dustGeo = new THREE.BufferGeometry();
-  dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
-  const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xe4d8ff, size: 0.045, transparent: true, opacity: 0.55 }));
-  scene.add(dust);
 
-  camera.position.set(0, 0.6, 7.5);
-  const lookTarget = new THREE.Vector3(0, 0, 0);
+  // Marker tree with a glow ring at each skill-category beat
+  const markerTrees = skillGroups.map((g, i) => {
+    const beatIndex = i + 1;
+    const side = i % 2 === 0 ? -1 : 1;
+    const z = -beatIndex * SPACING;
+    const tree = buildTree(1.3);
+    tree.position.set(side * 3.2, -1.6, z);
+    scene.add(tree);
 
-  const mouse = { x: 0, y: 0 };
-  window.addEventListener("mousemove", (e) => {
-    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
+    const glow = new THREE.Mesh(
+      new THREE.RingGeometry(0.5, 0.7, 32),
+      new THREE.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
+    );
+    glow.rotation.x = -Math.PI / 2;
+    glow.position.set(side * 3.2, -1.55, z);
+    scene.add(glow);
+
+    return { tree, glow, beatIndex };
   });
+
+  // Birds — always flying, independent of scroll
+  const birds = [0, 1, 2, 3].map((i) => {
+    const bird = buildBird();
+    scene.add(bird);
+    return { bird, radius: 6 + i * 2.5, speed: 0.25 + i * 0.05, height: 3 + i * 0.8, zOffset: -i * SPACING * 2, phase: i * 1.7 };
+  });
+
+  // Fireflies drifting through the undergrowth
+  const fireflyCount = 120;
+  const fireflyPos = new Float32Array(fireflyCount * 3);
+  for (let i = 0; i < fireflyCount; i += 1) {
+    fireflyPos[i * 3] = (Math.random() - 0.5) * 16;
+    fireflyPos[i * 3 + 1] = Math.random() * 3 - 1;
+    fireflyPos[i * 3 + 2] = -Math.random() * (totalLength + 20);
+  }
+  const fireflyGeo = new THREE.BufferGeometry();
+  fireflyGeo.setAttribute("position", new THREE.BufferAttribute(fireflyPos, 3));
+  const fireflies = new THREE.Points(
+    fireflyGeo,
+    new THREE.PointsMaterial({ color: 0xd8b9ff, size: 0.07, transparent: true, opacity: 0.75, sizeAttenuation: true })
+  );
+  scene.add(fireflies);
+
+  const curve = createBeatPath(beatCount, (i) => new THREE.Vector3(Math.sin(i * 0.7) * 1.6, 0.4, -i * SPACING));
+  const updateCamera = createScrollCameraUpdater(camera, curve, beatCount, { lookAhead: 0.05 });
 
   const clock = new THREE.Clock();
   function animate() {
     const t = clock.getElapsedTime();
 
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    const scrollT = max > 0 ? THREE.MathUtils.clamp(window.scrollY / max, 0, 1) : 0;
-    const beatFloat = scrollT * (beatCount - 1);
+    markerTrees.forEach(({ glow }) => {
+      glow.material.opacity = 0.4 + Math.sin(t * 1.5) * 0.2;
+      glow.scale.setScalar(1 + Math.sin(t * 1.5) * 0.08);
+    });
 
-    // One face turn (60°) per beat, plus a slow idle spin so it never sits
-    // perfectly still.
-    hexagon.rotation.y = -(beatFloat * (Math.PI / 3)) + t * 0.05;
-    hexagon.rotation.x = Math.sin(t * 0.3) * 0.05;
-    rim.rotation.z = t * 0.1;
+    birds.forEach(({ bird, radius, speed, height, zOffset, phase }) => {
+      const angle = t * speed + phase;
+      bird.position.set(Math.cos(angle) * radius, height + Math.sin(t * 2 + phase) * 0.3, Math.sin(angle) * radius + zOffset - t * 0.6);
+      bird.rotation.y = -angle + Math.PI / 2;
+      bird.children.forEach((wing, wi) => {
+        wing.rotation.z = Math.sin(t * 10 + phase) * 0.5 * (wi === 0 ? 1 : -1);
+      });
+    });
 
-    const dustPosAttr = dustGeo.getAttribute("position");
-    for (let i = 0; i < dustCount; i += 1) {
-      let x = dustPosAttr.getX(i) - 0.01;
-      if (x < -8) x = 8;
-      dustPosAttr.setX(i, x);
+    const fPos = fireflyGeo.getAttribute("position");
+    for (let i = 0; i < fireflyCount; i += 1) {
+      fPos.setY(i, fPos.getY(i) + Math.sin(t * 2 + i) * 0.002);
     }
-    dustPosAttr.needsUpdate = true;
+    fPos.needsUpdate = true;
 
-    camera.position.x = mouse.x * 0.6;
-    camera.position.y = 0.6 - mouse.y * 0.3;
-    camera.lookAt(lookTarget);
-
+    updateCamera();
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   }
