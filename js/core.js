@@ -4,9 +4,10 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 export { THREE };
 
-// Fixed paths so the admin page and the public pages agree on where each
-// photo lives. Update photos via admin.html (or by replacing the file
-// directly on github.com) — never by editing this list.
+// Fixed paths for each page's profile photo. To change a photo, replace
+// the file at this path (directly on github.com, or ask Claude) — the
+// pages just read whatever's here, with a graceful fallback if it's ever
+// missing.
 export const PHOTO_SLOTS = [
   { key: "home", label: "Home page", path: "assets/images/profile-home.jpg" },
   { key: "personal", label: "Personal Info page", path: "assets/images/profile-personal.jpg" },

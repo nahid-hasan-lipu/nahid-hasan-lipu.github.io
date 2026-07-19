@@ -27,20 +27,18 @@ no previous page in this tab's history).
 ## Profile photos
 
 Home, Personal Info, and Contact each show a circular profile photo (falls
-back to an "NL" initials placeholder if none is set). Photos are managed
-through **`admin.html`** — a private page, not linked from anywhere on the
-public site — where you log in with a GitHub personal access token (scoped
-to just this repo's contents) and upload/replace/delete each photo. Uploads
-go straight to this repo via the GitHub API and go live on the public site
-within about a minute, same as any other commit.
+back to an "NL" initials placeholder if the file is ever missing). Photos
+live at fixed paths — see `PHOTO_SLOTS` in `js/core.js`:
 
-Photos live at fixed paths (`assets/images/profile-home.jpg`,
-`profile-personal.jpg`, `profile-contact.jpg` — see `PHOTO_SLOTS` in
-`js/core.js`), so they can also be replaced directly on github.com without
-using admin.html at all.
+- `assets/images/profile-home.jpg`
+- `assets/images/profile-personal.jpg`
+- `assets/images/profile-contact.jpg`
 
-No visitor other than whoever holds a valid token can change anything —
-the public pages only ever *read* these files.
+To change one, replace the file at that path directly (on github.com, or
+locally + push) — the pages just read whatever's there. An earlier version
+of this had a token-gated `admin.html` for self-service uploads; that was
+dropped in favour of just editing the files directly, which is simpler and
+just as fast.
 
 ## Tech stack
 
@@ -51,14 +49,12 @@ Plain HTML/CSS/JavaScript (ES modules, no build step) + [Three.js](https://three
 ```
 web portpholio/
 ├── index.html, personal.html, education.html,
-│   skills.html, projects.html, contact.html    the 6 public pages
-├── admin.html                                    private — photo manager, not linked from the site
+│   skills.html, projects.html, contact.html    the 6 pages
 ├── css/
 │   ├── base.css       shared layout, typography, cards, buttons, chips
 │   ├── themes.css      per-page colour variables (body[data-theme="..."])
 │   └── pages.css       page-specific card variants (nav cards, info tiles,
-│                        timeline, skill groups, contact tiles, avatar photo,
-│                        admin login/photo-slot UI)
+│                        timeline, skill groups, contact tiles, avatar photo)
 ├── js/
 │   ├── data.js          all copy — single source of truth (profile, personal
 │   │                     info, education, skillGroups with descriptions +
@@ -73,12 +69,11 @@ web portpholio/
 │   │                     footer + icon set
 │   └── pages/             one script per page — builds that page's DOM and
 │                          its own 3D scene visuals
-│       ├── home.js, personal.js, education.js, skills.js,
-│       └── projects.js, contact.js, admin.js
+│       ├── home.js, personal.js, education.js,
+│       └── skills.js, projects.js, contact.js
 └── assets/
     └── images/            profile-home.jpg, profile-personal.jpg,
-                            profile-contact.jpg — managed via admin.html,
-                            absent until a photo is uploaded for that slot
+                            profile-contact.jpg (see "Profile photos" above)
 ```
 
 ## Editing content
