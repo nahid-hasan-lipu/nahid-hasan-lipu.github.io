@@ -138,6 +138,21 @@
   color: var(--text-muted);
 }
 
+/* Skills — hexagonal category badge */
+.hex-badge {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  background: var(--accent);
+  color: #06090f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
 /* Skills — grouped category cards */
 .skill-groups {
   display: grid;

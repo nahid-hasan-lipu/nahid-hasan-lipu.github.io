@@ -1,6 +1,6 @@
-import { THREE, addBaseLighting, attachMouseParallax, initPageScene, setupReveal } from "../core.js";
+import { THREE, addBaseLighting, createBeatPath, createScrollCameraUpdater, initPageScene, setupReveal } from "../core.js";
 import { personalInfo } from "../data.js";
-import { renderNav, initProgressBar } from "../nav.js";
+import { renderNav, initProgressBar, initScrollArrows } from "../nav.js";
 
 renderNav("personal");
 initProgressBar();
@@ -13,69 +13,152 @@ const tiles = [
   { label: "Interests", value: personalInfo.interests.join(", ") },
 ];
 
-document.getElementById("info-grid").innerHTML = tiles
-  .map(
-    (t) => `
-    <div class="info-tile">
-      <div class="info-label">${t.label}</div>
-      <div class="info-value">${t.value}</div>
-    </div>`
-  )
+const ACCENT = 0xffb454;
+const SPACING = 16;
+const beatCount = 1 + tiles.length;
+
+document.getElementById("forest-beats").innerHTML = tiles
+  .map((t, i) => {
+    const side = i % 2 === 0 ? "right" : "left";
+    return `
+    <section class="beat" id="clearing-${i}">
+      <div class="content-card content-card--${side}" data-reveal>
+        <p class="eyebrow">${t.label}</p>
+        <h2>${t.value}</h2>
+      </div>
+    </section>`;
+  })
   .join("");
 
 setupReveal();
+initScrollArrows(beatCount);
 
-// Warm, slow-drifting ember particle field rising past a rotating badge —
-// distinct from Home's orbiting-node structure and Education's staircase.
-function createEmberField(scene, count) {
-  const positions = new Float32Array(count * 3);
-  const speeds = new Float32Array(count);
-  for (let i = 0; i < count; i += 1) {
-    positions[i * 3] = (Math.random() - 0.5) * 18;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 14;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 18 - 4;
-    speeds[i] = 0.3 + Math.random() * 0.5;
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  const points = new THREE.Points(
-    geo,
-    new THREE.PointsMaterial({ color: 0xffb454, size: 0.06, transparent: true, opacity: 0.6, sizeAttenuation: true })
+function buildTree(scale = 1) {
+  const group = new THREE.Group();
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.14 * scale, 0.2 * scale, 1.6 * scale, 7),
+    new THREE.MeshStandardMaterial({ color: 0x2a1c10, roughness: 0.9 })
   );
-  scene.add(points);
-  return { points, speeds };
+  trunk.position.y = 0.8 * scale;
+  group.add(trunk);
+
+  const foliageMat = new THREE.MeshStandardMaterial({ color: 0x123018, roughness: 0.8 });
+  [0, 1, 2].forEach((tier) => {
+    const cone = new THREE.Mesh(new THREE.ConeGeometry((1.1 - tier * 0.22) * scale, 1.5 * scale, 8), foliageMat);
+    cone.position.y = (1.6 + tier * 1.0) * scale;
+    group.add(cone);
+  });
+  return group;
 }
 
-initPageScene({ bgColor: 0x150f0a, fogNear: 6, fogFar: 30 }, ({ scene, camera, renderer }) => {
-  addBaseLighting(scene, camera, { skyColor: 0xffcf94, groundColor: 0x150f0a, accent: 0xffb454 });
+function buildBird() {
+  const group = new THREE.Group();
+  const wingMat = new THREE.MeshBasicMaterial({ color: 0x1a140c, side: THREE.DoubleSide });
+  const wingShape = new THREE.BufferGeometry();
+  const verts = new Float32Array([0, 0, 0, 0.35, 0.12, 0, 0.7, 0, 0]);
+  wingShape.setAttribute("position", new THREE.BufferAttribute(verts, 3));
+  wingShape.setIndex([0, 1, 2]);
+  const left = new THREE.Mesh(wingShape, wingMat);
+  const right = new THREE.Mesh(wingShape, wingMat);
+  right.scale.x = -1;
+  group.add(left, right);
+  return group;
+}
 
-  const badge = new THREE.Mesh(
-    new THREE.TorusKnotGeometry(1.15, 0.34, 140, 20),
-    new THREE.MeshStandardMaterial({ color: 0x231a10, emissive: 0xffb454, emissiveIntensity: 0.4, roughness: 0.35, metalness: 0.4 })
+initPageScene({ bgColor: 0x0d1a10, fogNear: 6, fogFar: 30 }, ({ scene, camera, renderer }) => {
+  addBaseLighting(scene, camera, { skyColor: 0xbfe8a8, groundColor: 0x0d1a10, accent: ACCENT });
+
+  const totalLength = (beatCount - 1) * SPACING;
+
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(50, totalLength + 60),
+    new THREE.MeshStandardMaterial({ color: 0x14210f, roughness: 1 })
   );
-  scene.add(badge);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.set(0, -1.6, -totalLength / 2 + 10);
+  scene.add(ground);
 
-  const { points: embers, speeds } = createEmberField(scene, 220);
+  // Dense background trees for forest depth
+  for (let i = -2; i < beatCount + 2; i += 1) {
+    for (let s = 0; s < 3; s += 1) {
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const tree = buildTree(0.7 + Math.random() * 0.8);
+      tree.position.set(side * (4 + Math.random() * 10), -1.6, -i * SPACING + (Math.random() - 0.5) * SPACING);
+      scene.add(tree);
+    }
+  }
 
-  camera.position.set(0, 1.4, 7.5);
-  const basePosition = new THREE.Vector3(0, 1.4, 7.5);
-  const parallax = attachMouseParallax(camera, basePosition, 0.9);
+  // Marker tree with a glow ring at each info beat
+  const markerTrees = tiles.map((t, i) => {
+    const beatIndex = i + 1;
+    const side = i % 2 === 0 ? -1 : 1;
+    const z = -beatIndex * SPACING;
+    const tree = buildTree(1.3);
+    tree.position.set(side * 3.2, -1.6, z);
+    scene.add(tree);
+
+    const glow = new THREE.Mesh(
+      new THREE.RingGeometry(0.5, 0.7, 32),
+      new THREE.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
+    );
+    glow.rotation.x = -Math.PI / 2;
+    glow.position.set(side * 3.2, -1.55, z);
+    scene.add(glow);
+
+    return { tree, glow, beatIndex };
+  });
+
+  // Birds — always flying, independent of scroll
+  const birds = [0, 1, 2, 3].map((i) => {
+    const bird = buildBird();
+    scene.add(bird);
+    return { bird, radius: 6 + i * 2.5, speed: 0.25 + i * 0.05, height: 3 + i * 0.8, zOffset: -i * SPACING * 2, phase: i * 1.7 };
+  });
+
+  // Fireflies drifting through the undergrowth
+  const fireflyCount = 120;
+  const fireflyPos = new Float32Array(fireflyCount * 3);
+  for (let i = 0; i < fireflyCount; i += 1) {
+    fireflyPos[i * 3] = (Math.random() - 0.5) * 16;
+    fireflyPos[i * 3 + 1] = Math.random() * 3 - 1;
+    fireflyPos[i * 3 + 2] = -Math.random() * (totalLength + 20);
+  }
+  const fireflyGeo = new THREE.BufferGeometry();
+  fireflyGeo.setAttribute("position", new THREE.BufferAttribute(fireflyPos, 3));
+  const fireflies = new THREE.Points(
+    fireflyGeo,
+    new THREE.PointsMaterial({ color: 0xffe08a, size: 0.07, transparent: true, opacity: 0.75, sizeAttenuation: true })
+  );
+  scene.add(fireflies);
+
+  const curve = createBeatPath(beatCount, (i) => new THREE.Vector3(Math.sin(i * 0.7) * 1.6, 0.4, -i * SPACING));
+  const updateCamera = createScrollCameraUpdater(camera, curve, beatCount, { lookAhead: 0.05 });
 
   const clock = new THREE.Clock();
   function animate() {
     const t = clock.getElapsedTime();
-    badge.rotation.x = t * 0.18;
-    badge.rotation.y = t * 0.26;
 
-    const posAttr = embers.geometry.getAttribute("position");
-    for (let i = 0; i < speeds.length; i += 1) {
-      let y = posAttr.getY(i) + speeds[i] * 0.01;
-      if (y > 7) y = -7;
-      posAttr.setY(i, y);
+    markerTrees.forEach(({ glow }) => {
+      glow.material.opacity = 0.4 + Math.sin(t * 1.5) * 0.2;
+      glow.scale.setScalar(1 + Math.sin(t * 1.5) * 0.08);
+    });
+
+    birds.forEach(({ bird, radius, speed, height, zOffset, phase }) => {
+      const angle = t * speed + phase;
+      bird.position.set(Math.cos(angle) * radius, height + Math.sin(t * 2 + phase) * 0.3, Math.sin(angle) * radius + zOffset - t * 0.6);
+      bird.rotation.y = -angle + Math.PI / 2;
+      bird.children.forEach((wing, wi) => {
+        wing.rotation.z = Math.sin(t * 10 + phase) * 0.5 * (wi === 0 ? 1 : -1);
+      });
+    });
+
+    const fPos = fireflyGeo.getAttribute("position");
+    for (let i = 0; i < fireflyCount; i += 1) {
+      fPos.setY(i, fPos.getY(i) + Math.sin(t * 2 + i) * 0.002);
     }
-    posAttr.needsUpdate = true;
+    fPos.needsUpdate = true;
 
-    parallax();
+    updateCamera();
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   }

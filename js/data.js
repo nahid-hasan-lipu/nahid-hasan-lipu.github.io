@@ -11,6 +11,7 @@ export const profile = {
   about:
     "I turn messy, real-world data into decisions. My background bridges Computer Science & Engineering with two and a half years working hands-on inside a live US healthcare EHR system at Augmedix, followed by a Master's in Data Analytics at Unitec in Auckland. Every project on this site uses real public or official datasets, cleaned and analysed end-to-end in Python, with interactive dashboards in Streamlit and Power BI. I'm open to data analytics roles across any domain — business, financial, or healthcare — in New Zealand.",
   email: "lipunahidhasan@gmail.com",
+  phone: "", // TODO: fill in — contact.js only renders the phone tile when this is non-empty
   github: "https://github.com/nahid-hasan-lipu",
   linkedin: "https://www.linkedin.com/in/nahid-hasan-lipu-922447355/",
 };
@@ -50,22 +51,39 @@ export const education = [
   },
 ];
 
+// Base-skill categories, each with a description and the specific tools
+// underneath it — mirrors the full 33-skill LinkedIn Skills section,
+// merged with the hands-on project tooling used across this site.
 export const skillGroups = [
   {
-    category: "Programming & Data",
-    items: ["Python", "pandas", "NumPy", "SQL"],
+    category: "Programming & Data Engineering",
+    description: "Core languages and data-handling foundations used across every project on this site.",
+    items: ["Python", "SQL", "pandas", "NumPy", "Database Management (DBMS)", "Data Warehousing", "Big Data", "Cloud Computing", "Data Cleaning", "Data Mining", "Git / GitHub"],
   },
   {
-    category: "Analytics & Machine Learning",
-    items: ["scikit-learn", "Statistical Analysis", "Machine Learning"],
+    category: "Machine Learning & AI",
+    description: "Building and explaining predictive models — from classical ML to deep learning and the fairness auditing that's the focus of my Master's thesis.",
+    items: ["Machine Learning", "scikit-learn", "XGBoost", "PyTorch", "Deep Learning", "Artificial Intelligence (AI)", "Explainable AI", "SHAP (SHapley Additive exPlanations)"],
+  },
+  {
+    category: "Statistical Analysis & Research",
+    description: "Rigorous testing behind every headline finding on this site, not just eyeballing a chart.",
+    items: ["Statistical Analysis", "Hypothesis Testing", "Data Analytics"],
   },
   {
     category: "BI & Visualization",
-    items: ["Power BI", "Streamlit", "Matplotlib", "Plotly"],
+    description: "Turning analysis into a dashboard a non-technical stakeholder can act on.",
+    items: ["Microsoft Power BI", "Streamlit", "Matplotlib", "Plotly", "Data Visualization"],
   },
   {
-    category: "Tools",
-    items: ["Git / GitHub"],
+    category: "Healthcare Data & Compliance",
+    description: "Two and a half years working inside a live US healthcare EHR system, with the compliance discipline that requires.",
+    items: ["Electronic Health Records (EHR)", "Medical Scribing", "HIPAA", "Process Quality Improvement", "Process Automation"],
+  },
+  {
+    category: "Workplace & Operations",
+    description: "Process discipline, accuracy, and customer-facing skills carried over from retail, tech support, and healthcare documentation roles.",
+    items: ["Attention to Detail", "Stock Control", "Process Compliance", "Team Collaboration", "Customer Service", "Troubleshooting", "Technical Support"],
   },
 ];
 

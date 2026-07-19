@@ -1,79 +1,105 @@
-import { THREE, addBaseLighting, createParticleField, initPageScene, setupReveal } from "../core.js";
+import { THREE, addBaseLighting, createBeatPath, createScrollCameraUpdater, initPageScene, setupReveal } from "../core.js";
 import { education } from "../data.js";
-import { renderNav, initProgressBar } from "../nav.js";
+import { renderNav, initProgressBar, initScrollArrows } from "../nav.js";
 
 renderNav("education");
 initProgressBar();
 
-document.getElementById("timeline").innerHTML = education
+// Oldest first — a journey arriving at "now".
+const journey = [...education].reverse();
+const beatCount = 1 + journey.length;
+
+document.getElementById("road-beats").innerHTML = journey
   .map(
-    (e) => `
-    <div class="timeline-item">
-      <div class="period">${e.period}</div>
-      <h3>${e.degree}</h3>
-      <div class="institution">${e.institution}</div>
-      <div class="detail">${e.detail}</div>
-    </div>`
+    (e, i) => `
+    <section class="beat" id="stage-${i}">
+      <div class="content-card content-card--${i % 2 === 0 ? "right" : "left"}" data-reveal>
+        <p class="eyebrow">${e.period}</p>
+        <h2>${e.degree}</h2>
+        <p class="summary">${e.institution}</p>
+        <p class="stat">${e.detail}</p>
+      </div>
+    </section>`
   )
   .join("");
 
 setupReveal();
+initScrollArrows(beatCount);
 
-// An ascending staircase of glowing platforms, one per stage of education
-// (oldest at the back/bottom, most recent at the front/top) — the camera
-// drifts slowly along it on its own, a different motion pattern from the
-// orbiting Home scene or the idle badge on Personal Info.
-initPageScene({ bgColor: 0x081414, fogNear: 6, fogFar: 34 }, ({ scene, camera, renderer }) => {
+function makeRoadTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 512;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#0e1f1c";
+  ctx.fillRect(0, 0, 128, 512);
+  // edge lines
+  ctx.fillStyle = "#3ddc97";
+  ctx.fillRect(6, 0, 4, 512);
+  ctx.fillRect(118, 0, 4, 512);
+  // dashed center line
+  ctx.fillStyle = "#e8fff4";
+  for (let y = 0; y < 512; y += 64) {
+    ctx.fillRect(60, y, 8, 34);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 24);
+  return texture;
+}
+
+const SPACING = 16;
+
+initPageScene({ bgColor: 0x081414, fogNear: 10, fogFar: 48 }, ({ scene, camera, renderer }) => {
   addBaseLighting(scene, camera, { skyColor: 0x8fffd8, groundColor: 0x081414, accent: 0x3ddc97 });
-  createParticleField(scene, { count: 200, spread: 24, color: 0x8fffd8 });
 
-  const stageCount = education.length;
-  const platforms = [];
-  for (let i = 0; i < stageCount; i += 1) {
-    // education[] is newest-first; the staircase should rise from the
-    // oldest stage (SSC) to the newest (Master's), so invert the index.
-    const stepIndex = stageCount - 1 - i;
-    const y = stepIndex * 1.5;
-    const z = -stepIndex * 5;
-    const x = stepIndex % 2 === 0 ? -1.2 : 1.2;
+  const totalLength = (beatCount - 1) * SPACING;
+  const roadTexture = makeRoadTexture();
 
-    const platform = new THREE.Mesh(
-      new THREE.BoxGeometry(2.6, 0.15, 2.2),
-      new THREE.MeshStandardMaterial({ color: 0x0e2420, roughness: 0.5, metalness: 0.2 })
-    );
-    platform.position.set(x, y, z);
-    scene.add(platform);
+  const road = new THREE.Mesh(
+    new THREE.PlaneGeometry(6, totalLength + 60),
+    new THREE.MeshStandardMaterial({ map: roadTexture, roughness: 0.7 })
+  );
+  road.rotation.x = -Math.PI / 2;
+  road.position.set(0, -1.4, -totalLength / 2 + 10);
+  scene.add(road);
 
-    const edge = new THREE.Mesh(
-      new THREE.BoxGeometry(2.65, 0.03, 2.25),
-      new THREE.MeshBasicMaterial({ color: 0x3ddc97, transparent: true, opacity: 0.85 })
-    );
-    edge.position.set(x, y + 0.09, z);
-    scene.add(edge);
-
-    platforms.push({ x, y, z });
+  // Low-poly hills flanking the road
+  const hillMat = new THREE.MeshStandardMaterial({ color: 0x0d2a24, roughness: 0.9 });
+  for (let i = -2; i < beatCount + 2; i += 1) {
+    [-1, 1].forEach((side) => {
+      const hill = new THREE.Mesh(new THREE.ConeGeometry(4 + Math.random() * 3, 5 + Math.random() * 4, 6), hillMat);
+      hill.position.set(side * (9 + Math.random() * 6), -2, -i * SPACING + (Math.random() - 0.5) * 6);
+      scene.add(hill);
+    });
   }
 
-  // Reverse so the camera path runs oldest (close) -> newest (far), an
-  // ascending journey rather than a descending one.
-  const curvePoints = [...platforms].reverse().map((p) => new THREE.Vector3(p.x * 0.4, p.y + 2, p.z + 4));
-  const curve = new THREE.CatmullRomCurve3(curvePoints, false, "catmullrom", 0.4);
+  // Lamp-post marker at each education stage
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x123a32, roughness: 0.5, metalness: 0.3 });
+  const lampMat = new THREE.MeshBasicMaterial({ color: 0x3ddc97 });
+  for (let i = 0; i < journey.length; i += 1) {
+    const beatIndex = i + 1;
+    const z = -beatIndex * SPACING;
+    [-1, 1].forEach((side) => {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 8), postMat);
+      post.position.set(side * 3.4, -0.1, z);
+      scene.add(post);
+      const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), lampMat);
+      lamp.position.set(side * 3.4, 1.2, z);
+      scene.add(lamp);
+    });
+  }
 
-  const mouse = { x: 0, y: 0 };
-  window.addEventListener("mousemove", (e) => {
-    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
-  });
+  const curve = createBeatPath(beatCount, (i) => new THREE.Vector3(Math.sin(i * 0.5) * 1.4, 0.6, -i * SPACING));
+  const updateCamera = createScrollCameraUpdater(camera, curve, beatCount, { lookAhead: 0.05 });
 
   const clock = new THREE.Clock();
   function animate() {
     const t = clock.getElapsedTime();
-    const drift = (Math.sin(t * 0.05) + 1) / 2;
-    const pos = curve.getPointAt(drift);
-    camera.position.set(pos.x + mouse.x * 0.8, pos.y - mouse.y * 0.4, pos.z);
-    const lookAhead = curve.getPointAt(Math.min(drift + 0.05, 1));
-    camera.lookAt(lookAhead.x, lookAhead.y - 1, lookAhead.z - 6);
+    roadTexture.offset.y = (t * 0.05) % 1;
 
+    updateCamera();
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   }

@@ -7,6 +7,7 @@ initProgressBar();
 
 const tiles = [
   { href: `mailto:${profile.email}`, icon: icons.mail, label: profile.email },
+  ...(profile.phone ? [{ href: `tel:${profile.phone.replace(/[^+\d]/g, "")}`, icon: icons.phone, label: profile.phone }] : []),
   { href: profile.linkedin, icon: icons.linkedin, label: "LinkedIn" },
   { href: profile.github, icon: icons.github, label: "GitHub" },
 ];
@@ -58,6 +59,16 @@ initPageScene({ bgColor: 0x170a0d, fogNear: 6, fogFar: 26 }, ({ scene, camera, r
   const signals = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffb3c0, size: 0.06, transparent: true, opacity: 0.7 }));
   scene.add(signals);
 
+  // Small satellites orbiting the beacon — one per way to reach me
+  const satellites = tiles.map((_, i) => {
+    const sat = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 12, 12),
+      new THREE.MeshStandardMaterial({ color: 0xffe3e8, emissive: 0xff6b81, emissiveIntensity: 0.6 })
+    );
+    scene.add(sat);
+    return { sat, radius: 2.3 + i * 0.4, speed: 0.35 + i * 0.08, phase: i * 1.4, tilt: (i / tiles.length) * Math.PI };
+  });
+
   camera.position.set(0, 1.2, 7);
   const basePosition = new THREE.Vector3(0, 1.2, 7);
   const parallax = attachMouseParallax(camera, basePosition, 0.8);
@@ -83,6 +94,11 @@ initPageScene({ bgColor: 0x170a0d, fogNear: 6, fogFar: 26 }, ({ scene, camera, r
       posAttr.setZ(i, Math.sin(angles[i]) * radii[i] - 6);
     }
     posAttr.needsUpdate = true;
+
+    satellites.forEach(({ sat, radius, speed, phase, tilt }) => {
+      const angle = t * speed + phase;
+      sat.position.set(Math.cos(angle) * radius, Math.sin(tilt) * Math.sin(angle) * radius * 0.4, Math.sin(angle) * radius * Math.cos(tilt));
+    });
 
     parallax();
     renderer.render(scene, camera);

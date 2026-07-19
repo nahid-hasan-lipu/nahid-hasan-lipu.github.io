@@ -99,6 +99,40 @@ export function setupReveal() {
   targets.forEach((t) => observer.observe(t));
 }
 
+// Builds a smooth camera path through `beatCount` waypoints (one per
+// scroll "beat") and returns an update function that maps the page's
+// current scroll position onto that path each frame. Shared by every
+// scroll-driven 3D page (Projects, Home, Education, Skills, Personal Info)
+// so each page only has to define where its waypoints sit and what's
+// visible at each one — not re-derive the scroll math.
+export function createBeatPath(beatCount, pointFn) {
+  const points = [];
+  for (let i = 0; i < beatCount; i += 1) points.push(pointFn(i));
+  return new THREE.CatmullRomCurve3(points, false, "catmullrom", 0.4);
+}
+
+export function createScrollCameraUpdater(camera, curve, beatCount, { lookAhead = 0.04, focusPoints = [] } = {}) {
+  return function update() {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const t = max > 0 ? THREE.MathUtils.clamp(window.scrollY / max, 0, 1) : 0;
+    const beatFloat = t * (beatCount - 1);
+
+    camera.position.copy(curve.getPointAt(t));
+    const lookTarget = curve.getPointAt(THREE.MathUtils.clamp(t + lookAhead, 0, 1));
+
+    focusPoints.forEach((fp) => {
+      const dist = Math.abs(beatFloat - fp.beatIndex);
+      if (dist < 1) {
+        const pull = 1 - dist;
+        lookTarget.x += fp.side * (fp.strength ?? 0.5) * pull;
+      }
+    });
+
+    camera.lookAt(lookTarget);
+    return { t, beatFloat };
+  };
+}
+
 export function initPageScene(bgOptions, buildFn) {
   if (!supportsWebGL()) {
     document.body.classList.add("no-webgl");

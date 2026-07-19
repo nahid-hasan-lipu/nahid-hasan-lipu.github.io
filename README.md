@@ -2,16 +2,23 @@
 
 Live site: **https://nahid-hasan-lipu.github.io/**
 
-A 6-page portfolio, each page with its own colour theme, its own Three.js 3D scene, and its own card style:
+A 6-page portfolio, each page with its own colour theme and its own
+scroll-driven Three.js 3D world — scrolling moves the camera through the
+scene one "beat" at a time, each beat surfacing one card:
 
 | Page | Theme | 3D scene |
 |---|---|---|
-| Home (`index.html`) | Indigo | A core orbited by 5 glowing nodes — one per page, click to navigate |
-| Personal Info (`personal.html`) | Amber | A rotating torus-knot badge with rising ember particles |
-| Education (`education.html`) | Teal | An ascending staircase of platforms, one per stage of schooling |
-| Skills (`skills.html`) | Violet | A core with tilted orbiting rings of crystals, one ring per skill category |
-| Projects (`projects.html`) | Cyan | A scroll-driven corridor — the camera moves past a glowing installation for each of the 9 projects |
-| Contact (`contact.html`) | Rose | A pulsing beacon with signal particles drifting inward |
+| Home (`index.html`) | Indigo | A galaxy — camera orbits an always-animating sun, one planet per destination page, starfield background |
+| Personal Info (`personal.html`) | Amber | A forest walk — camera moves past trees, birds fly continuously, fireflies drift |
+| Education (`education.html`) | Teal | A road trip — camera drives down a glowing highway, a lamp-post marker at each stage, low-poly hills passing by |
+| Skills (`skills.html`) | Violet | A hex-grid world — camera moves past a floating hexagonal panel for each of the 6 skill categories, honeycomb floor |
+| Projects (`projects.html`) | Cyan | A corridor — the camera moves past a glowing installation for each of the 9 projects |
+| Contact (`contact.html`) | Rose | A pulsing beacon with orbiting satellites and signal particles drifting inward (kept as a single view — only 3-4 short items, no scroll journey needed) |
+
+Every scroll-driven page has fixed forward/back arrows (jump one beat at a
+time) with a position readout, and every page has a "← Back" button in the
+nav bar that returns to wherever you came from (falls back to Home if there's
+no previous page in this tab's history).
 
 ## Tech stack
 
@@ -30,11 +37,17 @@ web portpholio/
 │                        timeline, skill groups, contact tiles)
 ├── js/
 │   ├── data.js          all copy — single source of truth (profile, personal
-│   │                     info, education, skills, the 9 projects, nav links)
-│   ├── core.js           shared Three.js helpers (renderer setup, particle
-│   │                     fields, mouse parallax, WebGL-fallback detection)
-│   ├── nav.js             shared nav bar + footer + icon set
-│   └── pages/             one script per page — builds that page's DOM
+│   │                     info, education, skillGroups with descriptions +
+│   │                     tools, the 9 projects, nav links)
+│   ├── core.js           shared Three.js helpers — renderer setup, particle
+│   │                     fields, mouse parallax, WebGL-fallback detection,
+│   │                     and createBeatPath/createScrollCameraUpdater (the
+│   │                     scroll-to-camera-position math every scroll-driven
+│   │                     page shares)
+│   ├── nav.js             shared nav bar + back button + scroll arrows +
+│   │                     footer + icon set
+│   └── pages/             one script per page — builds that page's DOM and
+│                          its own 3D scene visuals
 │       ├── home.js, personal.js, education.js,
 │       └── skills.js, projects.js, contact.js
 └── assets/               (currently unused — all visuals are built from code)

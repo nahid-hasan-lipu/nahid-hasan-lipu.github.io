@@ -1,6 +1,6 @@
 import { THREE, addBaseLighting, createParticleField, initPageScene, setupReveal } from "../core.js";
 import { projects } from "../data.js";
-import { renderNav, initProgressBar, icons } from "../nav.js";
+import { renderNav, initProgressBar, initScrollArrows, icons } from "../nav.js";
 
 renderNav("projects");
 initProgressBar();
@@ -35,6 +35,7 @@ function renderProjectBeats() {
 
 renderProjectBeats();
 setupReveal();
+initScrollArrows(1 + projects.length);
 
 function makeNumberTexture(number) {
   const canvas = document.createElement("canvas");
