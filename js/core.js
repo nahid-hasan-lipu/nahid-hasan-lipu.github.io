@@ -4,6 +4,30 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 export { THREE };
 
+// Fixed paths so the admin page and the public pages agree on where each
+// photo lives. Update photos via admin.html (or by replacing the file
+// directly on github.com) — never by editing this list.
+export const PHOTO_SLOTS = [
+  { key: "home", label: "Home page", path: "assets/images/profile-home.jpg" },
+  { key: "personal", label: "Personal Info page", path: "assets/images/profile-personal.jpg" },
+  { key: "contact", label: "Contact page", path: "assets/images/profile-contact.jpg" },
+];
+
+// Uses %22 (encoded double quote) for the SVG's own attribute delimiters
+// instead of a literal ' — this string gets embedded inside a
+// single-quoted JS string inside a double-quoted HTML attribute below, so
+// a raw apostrophe here would terminate that string early and break the
+// page's JS (confirmed: it did, "Unexpected identifier 'http'").
+const AVATAR_FALLBACK =
+  "data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Crect width=%22200%22 height=%22200%22 rx=%22100%22 fill=%22%23161b26%22/%3E%3Ctext x=%22100%22 y=%22120%22 font-size=%2264%22 font-family=%22system-ui,sans-serif%22 font-weight=%22700%22 fill=%22%235b8cff%22 text-anchor=%22middle%22%3ENL%3C/text%3E%3C/svg%3E";
+
+// A circular avatar <img> that falls back to an initials placeholder if
+// the photo hasn't been uploaded yet (or fails to load) — the page never
+// shows a broken-image icon.
+export function avatarImgTag(path, { size = 140, className = "avatar-photo" } = {}) {
+  return `<img class="${className}" src="${path}" alt="Nahid Hasan Lipu" width="${size}" height="${size}" loading="lazy" onerror="this.onerror=null;this.src='${AVATAR_FALLBACK}';this.classList.add('avatar-photo--fallback')" />`;
+}
+
 export function supportsWebGL() {
   try {
     const canvas = document.createElement("canvas");

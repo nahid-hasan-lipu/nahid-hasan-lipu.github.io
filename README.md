@@ -24,6 +24,24 @@ time) with a position readout, and every page has a "← Back" button in the
 nav bar that returns to wherever you came from (falls back to Home if there's
 no previous page in this tab's history).
 
+## Profile photos
+
+Home, Personal Info, and Contact each show a circular profile photo (falls
+back to an "NL" initials placeholder if none is set). Photos are managed
+through **`admin.html`** — a private page, not linked from anywhere on the
+public site — where you log in with a GitHub personal access token (scoped
+to just this repo's contents) and upload/replace/delete each photo. Uploads
+go straight to this repo via the GitHub API and go live on the public site
+within about a minute, same as any other commit.
+
+Photos live at fixed paths (`assets/images/profile-home.jpg`,
+`profile-personal.jpg`, `profile-contact.jpg` — see `PHOTO_SLOTS` in
+`js/core.js`), so they can also be replaced directly on github.com without
+using admin.html at all.
+
+No visitor other than whoever holds a valid token can change anything —
+the public pages only ever *read* these files.
+
 ## Tech stack
 
 Plain HTML/CSS/JavaScript (ES modules, no build step) + [Three.js](https://threejs.org/) loaded from a CDN. No framework, no bundler — deploys directly as static files.
@@ -33,28 +51,34 @@ Plain HTML/CSS/JavaScript (ES modules, no build step) + [Three.js](https://three
 ```
 web portpholio/
 ├── index.html, personal.html, education.html,
-│   skills.html, projects.html, contact.html    the 6 pages
+│   skills.html, projects.html, contact.html    the 6 public pages
+├── admin.html                                    private — photo manager, not linked from the site
 ├── css/
 │   ├── base.css       shared layout, typography, cards, buttons, chips
 │   ├── themes.css      per-page colour variables (body[data-theme="..."])
 │   └── pages.css       page-specific card variants (nav cards, info tiles,
-│                        timeline, skill groups, contact tiles)
+│                        timeline, skill groups, contact tiles, avatar photo,
+│                        admin login/photo-slot UI)
 ├── js/
 │   ├── data.js          all copy — single source of truth (profile, personal
 │   │                     info, education, skillGroups with descriptions +
 │   │                     tools, the 9 projects, nav links)
 │   ├── core.js           shared Three.js helpers — renderer setup, particle
 │   │                     fields, mouse parallax, WebGL-fallback detection,
-│   │                     and createBeatPath/createScrollCameraUpdater (the
+│   │                     createBeatPath/createScrollCameraUpdater (the
 │   │                     scroll-to-camera-position math every scroll-driven
-│   │                     page shares)
+│   │                     page shares), PHOTO_SLOTS + avatarImgTag() (the
+│   │                     profile-photo fallback mechanism)
 │   ├── nav.js             shared nav bar + back button + scroll arrows +
 │   │                     footer + icon set
 │   └── pages/             one script per page — builds that page's DOM and
 │                          its own 3D scene visuals
-│       ├── home.js, personal.js, education.js,
-│       └── skills.js, projects.js, contact.js
-└── assets/               (currently unused — all visuals are built from code)
+│       ├── home.js, personal.js, education.js, skills.js,
+│       └── projects.js, contact.js, admin.js
+└── assets/
+    └── images/            profile-home.jpg, profile-personal.jpg,
+                            profile-contact.jpg — managed via admin.html,
+                            absent until a photo is uploaded for that slot
 ```
 
 ## Editing content

@@ -1,10 +1,11 @@
-import { THREE, addBaseLighting, attachMouseParallax, initPageScene, setupReveal, makeSkyGradientTexture, addGlowLayers } from "../core.js";
+import { THREE, addBaseLighting, attachMouseParallax, initPageScene, setupReveal, makeSkyGradientTexture, addGlowLayers, avatarImgTag, PHOTO_SLOTS } from "../core.js";
 import { profile } from "../data.js";
 import { renderNav, initProgressBar, icons } from "../nav.js";
 
 renderNav("home");
 initProgressBar();
 
+document.getElementById("avatar-slot").innerHTML = avatarImgTag(PHOTO_SLOTS[0].path, { size: 140 });
 document.getElementById("about-text").textContent = profile.about;
 document.getElementById("hero-links").innerHTML = `
   <a class="btn btn--primary" href="${profile.github}" target="_blank" rel="noopener">${icons.github}<span>GitHub</span></a>

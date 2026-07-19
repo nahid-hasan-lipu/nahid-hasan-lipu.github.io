@@ -1,9 +1,11 @@
-import { THREE, addBaseLighting, createParticleField, initPageScene, initCardFocus, makeSkyGradientTexture, addGlowLayers } from "../core.js";
+import { THREE, addBaseLighting, createParticleField, initPageScene, initCardFocus, makeSkyGradientTexture, addGlowLayers, avatarImgTag, PHOTO_SLOTS } from "../core.js";
 import { personalInfo } from "../data.js";
 import { renderNav, initProgressBar, initScrollArrows } from "../nav.js";
 
 renderNav("personal");
 initProgressBar();
+
+document.getElementById("avatar-slot").innerHTML = avatarImgTag(PHOTO_SLOTS[1].path, { size: 140 });
 
 const ACCENT = 0xffb454;
 const SPACING = 16;

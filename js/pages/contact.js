@@ -1,9 +1,11 @@
-import { THREE, addBaseLighting, attachMouseParallax, initPageScene, setupReveal, makeSkyGradientTexture, addGlowLayers } from "../core.js";
+import { THREE, addBaseLighting, attachMouseParallax, initPageScene, setupReveal, makeSkyGradientTexture, addGlowLayers, avatarImgTag, PHOTO_SLOTS } from "../core.js";
 import { profile } from "../data.js";
 import { renderNav, initProgressBar, icons } from "../nav.js";
 
 renderNav("contact");
 initProgressBar();
+
+document.getElementById("avatar-slot").innerHTML = avatarImgTag(PHOTO_SLOTS[2].path, { size: 140 });
 
 const tiles = [
   { href: `mailto:${profile.email}`, icon: icons.mail, label: profile.email },
