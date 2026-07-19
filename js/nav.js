@@ -29,7 +29,7 @@ export function renderNav(activeId) {
 
   const footer = document.getElementById("site-footer");
   if (footer) {
-    footer.innerHTML = `<p>&copy; 2026 ${profile.name}. Built with Three.js.</p>`;
+    footer.innerHTML = `<p>&copy; 2026 ${profile.name}</p>`;
   }
 }
 
