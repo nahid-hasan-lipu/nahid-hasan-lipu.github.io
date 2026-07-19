@@ -11,7 +11,7 @@ export const profile = {
   about:
     "I turn messy, real-world data into decisions. My background bridges Computer Science & Engineering with two and a half years working hands-on inside a live US healthcare EHR system at Augmedix, followed by a Master's in Data Analytics at Unitec in Auckland. Every project on this site uses real public or official datasets, cleaned and analysed end-to-end in Python, with interactive dashboards in Streamlit and Power BI. I'm open to data analytics roles across any domain — business, financial, or healthcare — in New Zealand.",
   email: "lipunahidhasan@gmail.com",
-  phone: "", // TODO: fill in — contact.js only renders the phone tile when this is non-empty
+  phone: "+64 22 456 1172",
   github: "https://github.com/nahid-hasan-lipu",
   linkedin: "https://www.linkedin.com/in/nahid-hasan-lipu-922447355/",
 };
