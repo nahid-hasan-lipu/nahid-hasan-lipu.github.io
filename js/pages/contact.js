@@ -1,4 +1,4 @@
-import { THREE, addBaseLighting, attachMouseParallax, initPageScene, setupReveal } from "../core.js";
+import { THREE, addBaseLighting, attachMouseParallax, initPageScene, setupReveal, makeSkyGradientTexture, addGlowLayers } from "../core.js";
 import { profile } from "../data.js";
 import { renderNav, initProgressBar, icons } from "../nav.js";
 
@@ -29,11 +29,19 @@ setupReveal();
 initPageScene({ bgColor: 0x170a0d, fogNear: 6, fogFar: 26 }, ({ scene, camera, renderer }) => {
   addBaseLighting(scene, camera, { skyColor: 0xffb3c0, groundColor: 0x170a0d, accent: 0xff6b81 });
 
+  scene.background = makeSkyGradientTexture([
+    [0, "#0a0407"],
+    [0.5, "#1a0a10"],
+    [0.8, "#2e0f16"],
+    [1, "#170a0d"],
+  ]);
+
   const beacon = new THREE.Mesh(
     new THREE.SphereGeometry(1, 32, 32),
     new THREE.MeshStandardMaterial({ color: 0x2a1013, emissive: 0xff6b81, emissiveIntensity: 0.55, roughness: 0.35 })
   );
   scene.add(beacon);
+  const beaconGlow = addGlowLayers(scene, { position: new THREE.Vector3(0, 0, 0), color: 0xff6b81, baseRadius: 1, layers: 4 });
 
   const ringGeo = new THREE.RingGeometry(1.3, 1.35, 64);
   const rings = [0, 1, 2].map((i) => {
@@ -78,6 +86,7 @@ initPageScene({ bgColor: 0x170a0d, fogNear: 6, fogFar: 26 }, ({ scene, camera, r
     const t = clock.getElapsedTime();
     const pulse = 1 + Math.sin(t * 1.4) * 0.06;
     beacon.scale.setScalar(pulse);
+    beaconGlow.scale.setScalar(pulse);
 
     rings.forEach(({ ring, offset }) => {
       const local = (t * 0.5 + offset) % 4.8;

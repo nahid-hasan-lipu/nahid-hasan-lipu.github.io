@@ -1,4 +1,4 @@
-import { THREE, addBaseLighting, createBeatPath, createScrollCameraUpdater, initPageScene, setupReveal } from "../core.js";
+import { THREE, addBaseLighting, createBeatPath, createScrollCameraUpdater, initPageScene, initCardFocus, makeSkyGradientTexture, makeNoiseTexture } from "../core.js";
 import { personalInfo } from "../data.js";
 import { renderNav, initProgressBar, initScrollArrows } from "../nav.js";
 
@@ -30,24 +30,37 @@ document.getElementById("forest-beats").innerHTML = tiles
   })
   .join("");
 
-setupReveal();
+initCardFocus();
 initScrollArrows(beatCount);
 
+const barkTexture = makeNoiseTexture("#241708", "#4a3116", { size: 64, spots: 30 });
+const foliageTexture = makeNoiseTexture("#0f2814", "#2f5a26", { size: 96, spots: 70 });
+
+// Organic canopy — a cluster of overlapping, irregularly offset blobs
+// instead of three clean stacked cones, so the silhouette doesn't read as
+// a geometric primitive.
 function buildTree(scale = 1) {
   const group = new THREE.Group();
   const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.14 * scale, 0.2 * scale, 1.6 * scale, 7),
-    new THREE.MeshStandardMaterial({ color: 0x2a1c10, roughness: 0.9 })
+    new THREE.CylinderGeometry(0.1 * scale, 0.22 * scale, 1.7 * scale, 7),
+    new THREE.MeshStandardMaterial({ map: barkTexture, roughness: 0.95 })
   );
-  trunk.position.y = 0.8 * scale;
+  trunk.position.y = 0.85 * scale;
   group.add(trunk);
 
-  const foliageMat = new THREE.MeshStandardMaterial({ color: 0x123018, roughness: 0.8 });
-  [0, 1, 2].forEach((tier) => {
-    const cone = new THREE.Mesh(new THREE.ConeGeometry((1.1 - tier * 0.22) * scale, 1.5 * scale, 8), foliageMat);
-    cone.position.y = (1.6 + tier * 1.0) * scale;
-    group.add(cone);
-  });
+  const foliageMat = new THREE.MeshStandardMaterial({ map: foliageTexture, roughness: 0.85 });
+  const blobCount = 5;
+  for (let i = 0; i < blobCount; i += 1) {
+    const blobScale = (0.75 + Math.random() * 0.55) * scale;
+    const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(blobScale, 0), foliageMat);
+    blob.position.set(
+      (Math.random() - 0.5) * 0.9 * scale,
+      (1.7 + Math.random() * 1.3) * scale,
+      (Math.random() - 0.5) * 0.9 * scale
+    );
+    blob.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    group.add(blob);
+  }
   return group;
 }
 
@@ -68,11 +81,22 @@ function buildBird() {
 initPageScene({ bgColor: 0x0d1a10, fogNear: 6, fogFar: 30 }, ({ scene, camera, renderer }) => {
   addBaseLighting(scene, camera, { skyColor: 0xbfe8a8, groundColor: 0x0d1a10, accent: ACCENT });
 
+  scene.background = makeSkyGradientTexture([
+    [0, "#050d07"],
+    [0.5, "#0d1c10"],
+    [0.8, "#1c2a14"],
+    [1, "#3a3418"],
+  ]);
+
   const totalLength = (beatCount - 1) * SPACING;
 
+  const groundTexture = makeNoiseTexture("#101f0c", "#233a18", { size: 128, spots: 90 });
+  groundTexture.wrapS = THREE.RepeatWrapping;
+  groundTexture.wrapT = THREE.RepeatWrapping;
+  groundTexture.repeat.set(8, (totalLength + 60) / 8);
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(50, totalLength + 60),
-    new THREE.MeshStandardMaterial({ color: 0x14210f, roughness: 1 })
+    new THREE.MeshStandardMaterial({ map: groundTexture, roughness: 1 })
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.set(0, -1.6, -totalLength / 2 + 10);

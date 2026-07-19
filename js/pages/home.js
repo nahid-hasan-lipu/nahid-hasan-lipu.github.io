@@ -1,4 +1,4 @@
-import { THREE, addBaseLighting, createBeatPath, initPageScene, setupReveal } from "../core.js";
+import { THREE, addBaseLighting, createBeatPath, initPageScene, initCardFocus, makeSkyGradientTexture, addGlowLayers, makeNoiseTexture } from "../core.js";
 import { profile } from "../data.js";
 import { renderNav, initProgressBar, initScrollArrows, icons } from "../nav.js";
 
@@ -66,8 +66,25 @@ document.getElementById("planet-beats").innerHTML = planetCards
   )
   .join("");
 
-setupReveal();
+initCardFocus();
 initScrollArrows(beatCount);
+
+function makeNebulaSprite(color, size) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+  gradient.addColorStop(0, color);
+  gradient.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 256, 256);
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(size, size, 1);
+  return sprite;
+}
 
 // A sun the camera slowly orbits as you scroll, with one planet per
 // destination page parked around it — the sun and starfield animate
@@ -75,6 +92,24 @@ initScrollArrows(beatCount);
 // into focus.
 initPageScene({ bgColor: 0x05060c, fogNear: 16, fogFar: 46 }, ({ scene, camera, renderer }) => {
   addBaseLighting(scene, camera, { skyColor: 0xffe3b0, groundColor: 0x05060c, accent: 0xffcc55 });
+
+  scene.background = makeSkyGradientTexture([
+    [0, "#020103"],
+    [0.35, "#0a0518"],
+    [0.65, "#150a28"],
+    [1, "#05060c"],
+  ]);
+
+  // Soft nebula clouds scattered far behind the scene
+  [
+    { color: "rgba(120,90,255,0.5)", size: 40, pos: [-30, 10, -70] },
+    { color: "rgba(255,110,150,0.4)", size: 34, pos: [35, -6, -80] },
+    { color: "rgba(90,180,255,0.4)", size: 30, pos: [10, 22, -90] },
+  ].forEach(({ color, size, pos }) => {
+    const sprite = makeNebulaSprite(color, size);
+    sprite.position.set(...pos);
+    scene.add(sprite);
+  });
 
   // Starfield — two depth layers for parallax richness
   function starLayer(count, spread, size, color, opacity) {
@@ -93,17 +128,16 @@ initPageScene({ bgColor: 0x05060c, fogNear: 16, fogFar: 46 }, ({ scene, camera, 
   const farStars = starLayer(700, 90, 0.09, 0xffffff, 0.65);
   const nearStars = starLayer(180, 45, 0.16, 0x9fc4ff, 0.85);
 
-  // Sun
+  // Sun — noise-textured surface (not a flat color) plus layered additive
+  // glow instead of a single translucent sphere, so it reads as a real
+  // light source rather than a flat-shaded primitive.
+  const sunTexture = makeNoiseTexture("#4a2a08", "#ffd27a", { spots: 90 });
   const sun = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(1.7, 2),
-    new THREE.MeshStandardMaterial({ color: 0x3a2408, emissive: 0xffcc55, emissiveIntensity: 0.9, roughness: 0.4 })
+    new THREE.IcosahedronGeometry(1.7, 3),
+    new THREE.MeshStandardMaterial({ map: sunTexture, emissive: 0xffcc55, emissiveMap: sunTexture, emissiveIntensity: 1.1, roughness: 0.5 })
   );
   scene.add(sun);
-  const sunGlow = new THREE.Mesh(
-    new THREE.SphereGeometry(2.3, 24, 24),
-    new THREE.MeshBasicMaterial({ color: 0xffcc55, transparent: true, opacity: 0.12 })
-  );
-  scene.add(sunGlow);
+  const sunGlowGroup = addGlowLayers(scene, { position: new THREE.Vector3(0, 0, 0), color: 0xffcc55, baseRadius: 1.8, layers: 4 });
 
   const orbitRadius = 10;
   const angleSpan = Math.PI * 1.25;
@@ -129,11 +163,13 @@ initPageScene({ bgColor: 0x05060c, fogNear: 16, fogFar: 46 }, ({ scene, camera, 
     const group = new THREE.Group();
     group.position.set(Math.cos(angle) * radius, 1.2, Math.sin(angle) * radius);
 
+    const planetTexture = makeNoiseTexture(`#${p.color.toString(16).padStart(6, "0")}`, "#ffffff", { spots: 40 });
     const planet = new THREE.Mesh(
       new THREE.SphereGeometry(0.5, 24, 24),
-      new THREE.MeshStandardMaterial({ color: p.color, emissive: p.color, emissiveIntensity: 0.5, roughness: 0.4 })
+      new THREE.MeshStandardMaterial({ map: planetTexture, color: p.color, emissive: p.color, emissiveIntensity: 0.35, roughness: 0.55 })
     );
     group.add(planet);
+    addGlowLayers(group, { position: new THREE.Vector3(0, 0, 0), color: p.color, baseRadius: 0.5, layers: 2 });
 
     const ring = new THREE.Mesh(
       new THREE.TorusGeometry(1, 0.03, 8, 48),
@@ -168,7 +204,7 @@ initPageScene({ bgColor: 0x05060c, fogNear: 16, fogFar: 46 }, ({ scene, camera, 
     const t = clock.getElapsedTime();
     sun.rotation.y = t * 0.15;
     sun.rotation.x = t * 0.08;
-    sunGlow.scale.setScalar(1 + Math.sin(t * 1.2) * 0.05);
+    sunGlowGroup.scale.setScalar(1 + Math.sin(t * 1.2) * 0.05);
     farStars.rotation.y = t * 0.004;
     nearStars.rotation.y = -t * 0.008;
 

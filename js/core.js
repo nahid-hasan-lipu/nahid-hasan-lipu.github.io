@@ -99,6 +99,90 @@ export function setupReveal() {
   targets.forEach((t) => observer.observe(t));
 }
 
+// Keeps the card nearest the viewport centre full-size and fully opaque,
+// and shrinks/fades every other card by how far it is from centre — so the
+// card above and below the active one stay visibly "peeking" into frame
+// instead of being fully off-screen, signalling there's more to scroll to.
+export function initCardFocus() {
+  const cards = Array.from(document.querySelectorAll(".content-card"));
+  if (!cards.length) return;
+
+  function update() {
+    const viewportCenter = window.innerHeight / 2;
+    cards.forEach((card) => {
+      const rect = card.getBoundingClientRect();
+      const cardCenter = rect.top + rect.height / 2;
+      const dist = Math.abs(cardCenter - viewportCenter) / window.innerHeight;
+      const scale = Math.max(0.8, 1 - dist * 0.45);
+      const opacity = Math.max(0.32, 1 - dist * 1.15);
+      card.style.transform = `scale(${scale.toFixed(3)})`;
+      card.style.opacity = opacity.toFixed(3);
+    });
+  }
+  window.addEventListener("scroll", update, { passive: true });
+  window.addEventListener("resize", update);
+  update();
+}
+
+// A soft vertical-gradient "sky" baked into a canvas texture — used as
+// scene.background so environments read as an actual sky/void instead of a
+// single flat fill color.
+export function makeSkyGradientTexture(stops) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2;
+  canvas.height = 512;
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createLinearGradient(0, 0, 0, 512);
+  stops.forEach(([offset, color]) => gradient.addColorStop(offset, color));
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 2, 512);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+// Cheap, reliable "glow" without a post-processing pipeline: a stack of
+// additive-blended transparent spheres, each larger and fainter than the
+// last, around an emissive core — reads far more like a real light source
+// than a single flat translucent sphere.
+export function addGlowLayers(scene, { position = new THREE.Vector3(0, 0, 0), color, baseRadius = 1, layers = 3 } = {}) {
+  const group = new THREE.Group();
+  group.position.copy(position);
+  for (let i = 1; i <= layers; i += 1) {
+    const glow = new THREE.Mesh(
+      new THREE.SphereGeometry(baseRadius * (1 + i * 0.35), 20, 20),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.16 / i, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    group.add(glow);
+  }
+  scene.add(group);
+  return group;
+}
+
+// A canvas-noise texture — mottled, irregular shading instead of a flat
+// color, used for planet surfaces, bark, and ground so they don't read as
+// perfectly uniform "prototype" primitives.
+export function makeNoiseTexture(baseColor, spotColor, { size = 128, spots = 60 } = {}) {
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = spotColor;
+  for (let i = 0; i < spots; i += 1) {
+    ctx.globalAlpha = 0.08 + Math.random() * 0.18;
+    const r = 4 + Math.random() * (size / 6);
+    ctx.beginPath();
+    ctx.arc(Math.random() * size, Math.random() * size, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
 // Builds a smooth camera path through `beatCount` waypoints (one per
 // scroll "beat") and returns an update function that maps the page's
 // current scroll position onto that path each frame. Shared by every

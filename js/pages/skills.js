@@ -1,4 +1,4 @@
-import { THREE, addBaseLighting, createBeatPath, createScrollCameraUpdater, initPageScene, setupReveal } from "../core.js";
+import { THREE, addBaseLighting, createBeatPath, createScrollCameraUpdater, initPageScene, initCardFocus, makeSkyGradientTexture, addGlowLayers } from "../core.js";
 import { skillGroups } from "../data.js";
 import { renderNav, initProgressBar, initScrollArrows } from "../nav.js";
 
@@ -25,7 +25,7 @@ document.getElementById("hex-beats").innerHTML = skillGroups
   })
   .join("");
 
-setupReveal();
+initCardFocus();
 initScrollArrows(beatCount);
 
 function makeHexGridTexture() {
@@ -69,24 +69,43 @@ function buildHexPanel(index, z, side) {
   group.rotation.y = side > 0 ? -0.35 : 0.35;
   group.userData = { baseY: 1.4, phase: index };
 
-  const hexPrism = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.6, 1.6, 0.35, 6),
-    new THREE.MeshStandardMaterial({ color: 0x1c1430, emissive: ACCENT, emissiveIntensity: 0.45, roughness: 0.35, metalness: 0.3 })
+  // Two stacked hex prisms of different radii give a bevelled-edge look
+  // instead of a single flat-sided cylinder.
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.6, 1.5, 0.3, 6),
+    new THREE.MeshStandardMaterial({ color: 0x160f28, roughness: 0.4, metalness: 0.4 })
   );
-  hexPrism.rotation.x = Math.PI / 2;
-  group.add(hexPrism);
+  base.rotation.x = Math.PI / 2;
+  group.add(base);
+
+  const cap = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.4, 1.4, 0.12, 6),
+    new THREE.MeshStandardMaterial({ color: 0x241a3a, emissive: ACCENT, emissiveIntensity: 0.5, roughness: 0.3, metalness: 0.3 })
+  );
+  cap.rotation.x = Math.PI / 2;
+  cap.position.z = 0.21;
+  group.add(cap);
 
   const rim = new THREE.Mesh(
-    new THREE.TorusGeometry(1.65, 0.04, 8, 6),
+    new THREE.TorusGeometry(1.62, 0.035, 8, 6),
     new THREE.MeshBasicMaterial({ color: ACCENT })
   );
   group.add(rim);
+
+  addGlowLayers(group, { position: new THREE.Vector3(0, 0, 0), color: ACCENT, baseRadius: 1.2, layers: 2 });
 
   return group;
 }
 
 initPageScene({ bgColor: 0x120a1f, fogNear: 12, fogFar: 50 }, ({ scene, camera, renderer }) => {
   addBaseLighting(scene, camera, { skyColor: 0xd8b9ff, groundColor: 0x120a1f, accent: ACCENT });
+
+  scene.background = makeSkyGradientTexture([
+    [0, "#05030c"],
+    [0.4, "#0f0a20"],
+    [0.7, "#1c1436"],
+    [1, "#2a1c42"],
+  ]);
 
   const totalLength = (beatCount - 1) * SPACING;
 

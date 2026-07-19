@@ -1,4 +1,4 @@
-import { THREE, addBaseLighting, createParticleField, initPageScene, setupReveal } from "../core.js";
+import { THREE, addBaseLighting, createParticleField, initPageScene, initCardFocus, makeSkyGradientTexture, addGlowLayers } from "../core.js";
 import { projects } from "../data.js";
 import { renderNav, initProgressBar, initScrollArrows, icons } from "../nav.js";
 
@@ -34,7 +34,7 @@ function renderProjectBeats() {
 }
 
 renderProjectBeats();
-setupReveal();
+initCardFocus();
 initScrollArrows(1 + projects.length);
 
 function makeNumberTexture(number) {
@@ -79,11 +79,20 @@ function buildPanel(project, index, z) {
   numberPlane.position.z = 0.01;
   group.add(numberPlane);
 
+  addGlowLayers(group, { position: new THREE.Vector3(0, 0, 0), color: ACCENT, baseRadius: 1.3, layers: 2 });
+
   return group;
 }
 
 initPageScene({ bgColor: 0x0a1014, fogNear: 14, fogFar: 55 }, ({ scene, camera, renderer }) => {
   addBaseLighting(scene, camera, { skyColor: 0x8fdfff, groundColor: 0x0a1014, accent: ACCENT });
+
+  scene.background = makeSkyGradientTexture([
+    [0, "#03060a"],
+    [0.45, "#081a20"],
+    [0.75, "#0d2a30"],
+    [1, "#123a3e"],
+  ]);
 
   const beatCount = 1 + projects.length; // intro + one per project
   const totalLength = (beatCount - 1) * SPACING;

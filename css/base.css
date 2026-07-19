@@ -195,11 +195,21 @@ body.no-webgl {
   z-index: 10;
 }
 
+/* Beats are deliberately shorter than the viewport (not 100vh) so the
+   previous and next card are both partially visible at the top/bottom
+   edges of the screen around the centered "active" card — a visual cue
+   that there's more to scroll to. initCardFocus() in core.js drives the
+   scale/opacity of each card based on its distance from viewport centre. */
 .beat {
-  min-height: 100vh;
+  min-height: 74vh;
   display: flex;
   align-items: center;
-  padding: 6rem 2rem;
+  padding: 4rem 2rem;
+}
+
+.beat--hero,
+.beat:first-child {
+  min-height: 100vh;
 }
 
 /* Shared glass card, reused as the base for page-specific card variants */
@@ -213,7 +223,7 @@ body.no-webgl {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
   opacity: 0;
   transform: translateY(28px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
 .content-card.is-visible {
