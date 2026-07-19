@@ -1,4 +1,4 @@
-import { THREE, addBaseLighting, createBeatPath, initPageScene, initCardFocus, makeSkyGradientTexture, addGlowLayers, makeNoiseTexture } from "../core.js";
+import { THREE, addBaseLighting, createBeatPath, initPageScene, initCardFocus, loadPhotoBackground, addGlowLayers, makeNoiseTexture } from "../core.js";
 import { profile } from "../data.js";
 import { renderNav, initProgressBar, initScrollArrows, icons } from "../nav.js";
 
@@ -69,47 +69,15 @@ document.getElementById("planet-beats").innerHTML = planetCards
 initCardFocus();
 initScrollArrows(beatCount);
 
-function makeNebulaSprite(color, size) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 256;
-  canvas.height = 256;
-  const ctx = canvas.getContext("2d");
-  const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-  gradient.addColorStop(0, color);
-  gradient.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 256, 256);
-  const texture = new THREE.CanvasTexture(canvas);
-  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false });
-  const sprite = new THREE.Sprite(material);
-  sprite.scale.set(size, size, 1);
-  return sprite;
-}
-
 // A sun the camera slowly orbits as you scroll, with one planet per
 // destination page parked around it — the sun and starfield animate
 // continuously on their own; the planets brighten as their beat comes
-// into focus.
-initPageScene({ bgColor: 0x05060c, fogNear: 16, fogFar: 46 }, ({ scene, camera, renderer }) => {
+// into focus. Backdrop is a real deep-space photograph (twin spiral
+// galaxies), not a drawn gradient.
+initPageScene({ bgColor: 0x05060c, fogNear: 20, fogFar: 60 }, ({ scene, camera, renderer }) => {
   addBaseLighting(scene, camera, { skyColor: 0xffe3b0, groundColor: 0x05060c, accent: 0xffcc55 });
 
-  scene.background = makeSkyGradientTexture([
-    [0, "#020103"],
-    [0.35, "#0a0518"],
-    [0.65, "#150a28"],
-    [1, "#05060c"],
-  ]);
-
-  // Soft nebula clouds scattered far behind the scene
-  [
-    { color: "rgba(120,90,255,0.5)", size: 40, pos: [-30, 10, -70] },
-    { color: "rgba(255,110,150,0.4)", size: 34, pos: [35, -6, -80] },
-    { color: "rgba(90,180,255,0.4)", size: 30, pos: [10, 22, -90] },
-  ].forEach(({ color, size, pos }) => {
-    const sprite = makeNebulaSprite(color, size);
-    sprite.position.set(...pos);
-    scene.add(sprite);
-  });
+  loadPhotoBackground(scene, "assets/images/galaxy.jpg");
 
   // Starfield — two depth layers for parallax richness
   function starLayer(count, spread, size, color, opacity) {

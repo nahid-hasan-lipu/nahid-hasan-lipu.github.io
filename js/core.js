@@ -16,15 +16,18 @@ export function supportsWebGL() {
   }
 }
 
-export function createBaseScene({ bgColor, fogNear = 8, fogFar = 40 }) {
+export function createBaseScene({ bgColor, fogNear = 8, fogFar = 40, transparent = false }) {
   const container = document.getElementById("canvas-container");
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(bgColor);
-  scene.fog = new THREE.Fog(bgColor, fogNear, fogFar);
+  if (!transparent) {
+    scene.background = new THREE.Color(bgColor);
+    scene.fog = new THREE.Fog(bgColor, fogNear, fogFar);
+  }
 
   const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: transparent, powerPreference: "high-performance" });
+  if (transparent) renderer.setClearColor(0x000000, 0);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -157,6 +160,15 @@ export function addGlowLayers(scene, { position = new THREE.Vector3(0, 0, 0), co
   }
   scene.add(group);
   return group;
+}
+
+// Loads a real photo as the scene background — used where a genuine
+// photograph reads better than a procedurally-drawn gradient.
+export function loadPhotoBackground(scene, path) {
+  const texture = new THREE.TextureLoader().load(path);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  scene.background = texture;
+  return texture;
 }
 
 // A canvas-noise texture — mottled, irregular shading instead of a flat

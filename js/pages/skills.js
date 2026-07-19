@@ -1,4 +1,4 @@
-import { THREE, addBaseLighting, createBeatPath, createScrollCameraUpdater, initPageScene, initCardFocus, makeSkyGradientTexture, addGlowLayers } from "../core.js";
+import { THREE, addBaseLighting, initPageScene, initCardFocus, loadPhotoBackground, addGlowLayers } from "../core.js";
 import { skillGroups } from "../data.js";
 import { renderNav, initProgressBar, initScrollArrows } from "../nav.js";
 
@@ -6,7 +6,7 @@ renderNav("skills");
 initProgressBar();
 
 const ACCENT = 0xa78bfa;
-const SPACING = 16;
+const FACE_COLORS = [0xa78bfa, 0x8f6bf0, 0xc0a8ff, 0x9370f5, 0xb69aff, 0x7c5ce8];
 const beatCount = 1 + skillGroups.length;
 
 document.getElementById("hex-beats").innerHTML = skillGroups
@@ -28,116 +28,122 @@ document.getElementById("hex-beats").innerHTML = skillGroups
 initCardFocus();
 initScrollArrows(beatCount);
 
-function makeHexGridTexture() {
+function makeFaceTexture(number, color) {
   const canvas = document.createElement("canvas");
-  const size = 256;
-  canvas.width = size;
-  canvas.height = size;
+  canvas.width = 256;
+  canvas.height = 256;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#160e26";
-  ctx.fillRect(0, 0, size, size);
-  ctx.strokeStyle = "rgba(167, 139, 250, 0.5)";
-  ctx.lineWidth = 1.5;
-  const r = 22;
-  const hexH = r * Math.sqrt(3);
-  for (let row = -1; row < size / hexH + 1; row += 1) {
-    for (let col = -1; col < size / (r * 1.5) + 1; col += 1) {
-      const x = col * r * 1.5;
-      const y = row * hexH + (col % 2 === 0 ? 0 : hexH / 2);
-      ctx.beginPath();
-      for (let s = 0; s < 6; s += 1) {
-        const angle = (Math.PI / 3) * s;
-        const px = x + r * Math.cos(angle);
-        const py = y + r * Math.sin(angle);
-        if (s === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.stroke();
-    }
-  }
+  ctx.fillStyle = `#${color.toString(16).padStart(6, "0")}`;
+  ctx.fillRect(0, 0, 256, 256);
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.font = "700 120px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(String(number), 128, 138);
   const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(6, 30);
+  texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
 
-function buildHexPanel(index, z, side) {
-  const group = new THREE.Group();
-  group.position.set(side * 8.5, 1.4, z);
-  group.rotation.y = side > 0 ? -0.35 : 0.35;
-  group.userData = { baseY: 1.4, phase: index };
+// A single 3D hexagonal prism that rotates as you scroll — each of its 6
+// side faces takes its turn facing the camera, one per skill category,
+// floating over a real photographed mountain-and-sea backdrop.
+function buildHexagon() {
+  const radius = 2.4;
+  const depth = 1.6;
+  const geometry = new THREE.CylinderGeometry(radius, radius, depth, 6, 1, false);
 
-  // Two stacked hex prisms of different radii give a bevelled-edge look
-  // instead of a single flat-sided cylinder.
-  const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.6, 1.5, 0.3, 6),
-    new THREE.MeshStandardMaterial({ color: 0x160f28, roughness: 0.4, metalness: 0.4 })
+  // CylinderGeometry writes side-face indices first (6 quads = 36 indices
+  // for a 6-sided prism), then the top cap, then the bottom cap — split
+  // the single "sides" group into 6 groups so each face can take its own
+  // material.
+  geometry.clearGroups();
+  for (let face = 0; face < 6; face += 1) {
+    geometry.addGroup(face * 6, 6, face);
+  }
+  const sideIndexCount = 6 * 6;
+  const capIndexCount = (geometry.index.count - sideIndexCount) / 2;
+  geometry.addGroup(sideIndexCount, capIndexCount, 6);
+  geometry.addGroup(sideIndexCount + capIndexCount, capIndexCount, 7);
+
+  const faceMaterials = FACE_COLORS.map(
+    (color, i) =>
+      new THREE.MeshStandardMaterial({
+        map: makeFaceTexture(i + 1, color),
+        emissive: color,
+        emissiveIntensity: 0.35,
+        roughness: 0.35,
+        metalness: 0.25,
+      })
   );
-  base.rotation.x = Math.PI / 2;
-  group.add(base);
+  const capMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1430, roughness: 0.5, metalness: 0.3 });
 
-  const cap = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.4, 1.4, 0.12, 6),
-    new THREE.MeshStandardMaterial({ color: 0x241a3a, emissive: ACCENT, emissiveIntensity: 0.5, roughness: 0.3, metalness: 0.3 })
-  );
-  cap.rotation.x = Math.PI / 2;
-  cap.position.z = 0.21;
-  group.add(cap);
-
-  const rim = new THREE.Mesh(
-    new THREE.TorusGeometry(1.62, 0.035, 8, 6),
-    new THREE.MeshBasicMaterial({ color: ACCENT })
-  );
-  group.add(rim);
-
-  addGlowLayers(group, { position: new THREE.Vector3(0, 0, 0), color: ACCENT, baseRadius: 1.2, layers: 2 });
-
-  return group;
+  const hexagon = new THREE.Mesh(geometry, [...faceMaterials, capMaterial, capMaterial]);
+  return hexagon;
 }
 
-initPageScene({ bgColor: 0x120a1f, fogNear: 12, fogFar: 50 }, ({ scene, camera, renderer }) => {
+initPageScene({ bgColor: 0x120a1f, fogNear: 18, fogFar: 40 }, ({ scene, camera, renderer }) => {
   addBaseLighting(scene, camera, { skyColor: 0xd8b9ff, groundColor: 0x120a1f, accent: ACCENT });
 
-  scene.background = makeSkyGradientTexture([
-    [0, "#05030c"],
-    [0.4, "#0f0a20"],
-    [0.7, "#1c1436"],
-    [1, "#2a1c42"],
-  ]);
+  loadPhotoBackground(scene, "assets/images/mountain-sea.jpg");
 
-  const totalLength = (beatCount - 1) * SPACING;
+  const hexagon = buildHexagon();
+  scene.add(hexagon);
 
-  const floorTexture = makeHexGridTexture();
-  const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(40, totalLength + 60),
-    new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.6 })
-  );
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.set(0, -1.8, -totalLength / 2 + 10);
-  scene.add(floor);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(2.55, 0.045, 8, 6), new THREE.MeshBasicMaterial({ color: ACCENT }));
+  rim.rotation.x = Math.PI / 2;
+  scene.add(rim);
 
-  const panels = skillGroups.map((g, i) => {
-    const beatIndex = i + 1;
-    const side = i % 2 === 0 ? -1 : 1; // opposite of the matching content-card side
-    const z = -beatIndex * SPACING;
-    const panel = buildHexPanel(i, z, side);
-    scene.add(panel);
-    return { group: panel };
+  addGlowLayers(scene, { position: new THREE.Vector3(0, 0, 0), color: ACCENT, baseRadius: 1.7, layers: 2 });
+
+  // A little ambient dust drifting past, so the scene isn't perfectly static
+  const dustCount = 140;
+  const dustPos = new Float32Array(dustCount * 3);
+  for (let i = 0; i < dustCount; i += 1) {
+    dustPos[i * 3] = (Math.random() - 0.5) * 16;
+    dustPos[i * 3 + 1] = (Math.random() - 0.5) * 10;
+    dustPos[i * 3 + 2] = (Math.random() - 0.5) * 10 - 2;
+  }
+  const dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
+  const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xe4d8ff, size: 0.045, transparent: true, opacity: 0.55 }));
+  scene.add(dust);
+
+  camera.position.set(0, 0.6, 7.5);
+  const lookTarget = new THREE.Vector3(0, 0, 0);
+
+  const mouse = { x: 0, y: 0 };
+  window.addEventListener("mousemove", (e) => {
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
   });
-
-  const curve = createBeatPath(beatCount, (i) => new THREE.Vector3(Math.sin(i * 0.8) * 1.2, 1.6, -i * SPACING));
-  const updateCamera = createScrollCameraUpdater(camera, curve, beatCount, { lookAhead: 0.05 });
 
   const clock = new THREE.Clock();
   function animate() {
-    const elapsed = clock.getElapsedTime();
-    panels.forEach(({ group }) => {
-      group.rotation.z = Math.sin(elapsed * 0.4 + group.userData.phase) * 0.15;
-      group.position.y = group.userData.baseY + Math.sin(elapsed * 0.6 + group.userData.phase) * 0.12;
-    });
-    updateCamera();
+    const t = clock.getElapsedTime();
+
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollT = max > 0 ? THREE.MathUtils.clamp(window.scrollY / max, 0, 1) : 0;
+    const beatFloat = scrollT * (beatCount - 1);
+
+    // One face turn (60°) per beat, plus a slow idle spin so it never sits
+    // perfectly still.
+    hexagon.rotation.y = -(beatFloat * (Math.PI / 3)) + t * 0.05;
+    hexagon.rotation.x = Math.sin(t * 0.3) * 0.05;
+    rim.rotation.z = t * 0.1;
+
+    const dustPosAttr = dustGeo.getAttribute("position");
+    for (let i = 0; i < dustCount; i += 1) {
+      let x = dustPosAttr.getX(i) - 0.01;
+      if (x < -8) x = 8;
+      dustPosAttr.setX(i, x);
+    }
+    dustPosAttr.needsUpdate = true;
+
+    camera.position.x = mouse.x * 0.6;
+    camera.position.y = 0.6 - mouse.y * 0.3;
+    camera.lookAt(lookTarget);
+
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   }
