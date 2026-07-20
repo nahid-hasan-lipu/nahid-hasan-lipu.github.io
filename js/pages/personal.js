@@ -22,10 +22,9 @@ const beatCount = 1 + tiles.length;
 
 document.getElementById("info-beats").innerHTML = tiles
   .map((t, i) => {
-    const side = i % 2 === 0 ? "right" : "left";
     return `
     <section class="beat" id="detail-${i}">
-      <div class="content-card content-card--${side}" data-reveal>
+      <div class="content-card content-card--center" data-reveal>
         <p class="eyebrow">${t.number} · Personal Info</p>
         <h2>${t.label}</h2>
         <p class="summary">${t.value}</p>

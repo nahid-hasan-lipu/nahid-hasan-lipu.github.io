@@ -19,10 +19,14 @@
   opacity: 0.85;
 }
 
-/* Home — nav cards double as buttons */
+/* Home — nav cards double as buttons. Flex (not grid) so an incomplete
+   last row centers itself instead of left-aligning with a lopsided gap —
+   with 5 cards at 3-per-row, row 2's 2 cards sit centered, the leftover
+   space split evenly on both sides rather than all bunched on the right. */
 .nav-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 1.1rem;
   margin-top: 1.8rem;
 }
@@ -31,6 +35,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  flex: 0 1 240px;
   padding: 1.5rem 1.6rem;
   border-radius: 16px;
   border: 1px solid var(--border);
