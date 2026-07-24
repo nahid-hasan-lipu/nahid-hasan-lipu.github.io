@@ -4,12 +4,12 @@
 
 export const profile = {
   name: "Nahid Hasan Lipu",
-  title: "Data Analytics Postgraduate",
+  title: "Data Analytics Graduate",
   location: "Auckland, New Zealand",
   tagline:
     "Master of Applied Technologies (Data Analytics), Unitec Institute of Technology, Auckland — with a Computer Science & Engineering background and two and a half years of hands-on data work inside a live US healthcare EHR system.",
   about:
-    "I turn messy, real-world data into decisions. My background bridges Computer Science & Engineering with two and a half years working hands-on inside a live US healthcare EHR system at Augmedix, followed by a Master's in Data Analytics at Unitec in Auckland. Every project on this site uses real public or official datasets, cleaned and analysed end-to-end in Python, with interactive dashboards in Streamlit and Power BI. I'm open to data analytics roles across any domain — business, financial, or healthcare — in New Zealand.",
+    "I turn messy, real-world data into decisions. My background bridges Computer Science & Engineering with two and a half years working hands-on inside a live US healthcare EHR system at Augmedix, followed by a Master's in Data Analytics at Unitec in Auckland, where my thesis on procedural fairness in HR machine learning was awarded a Grade A. Every project on this site uses real public or official datasets, cleaned and analysed end-to-end in Python, with interactive dashboards in Streamlit and Power BI. I'm open to data analytics roles across any domain — business, financial, or healthcare — in New Zealand.",
   email: "lipunahidhasan@gmail.com",
   phone: "+64 22 456 1172",
   github: "https://github.com/nahid-hasan-lipu",
@@ -29,7 +29,7 @@ export const education = [
     period: "Feb 2025 — Jul 2026",
     degree: "Master of Applied Technologies (Data Analytics)",
     institution: "Unitec Institute of Technology, Auckland, New Zealand",
-    detail: "Thesis: \"Procedural Fairness in HR Machine Learning\" — submitted, results pending.",
+    detail: "Thesis: \"Procedural Fairness in HR Machine Learning\" — awarded Grade A.",
   },
   {
     period: "Graduated 2021",
@@ -97,7 +97,7 @@ export const projects = [
     tag: "Master's Thesis · ML Fairness",
     summary:
       "A fairness-audit framework for HR machine-learning models. Turns three organisational-justice constructs — process consistency, voice, transparency — into measurable ML metrics, and benchmarks four bias-mitigation methods head-to-head with statistically rigorous testing across four real HR datasets.",
-    stat: "4 datasets · 4 bias-mitigation methods compared",
+    stat: "Awarded Grade A · 4 datasets, 4 bias-mitigation methods compared",
     tech: ["Python", "scikit-learn", "SHAP", "Statistical Testing"],
     repo: "https://github.com/nahid-hasan-lipu/procedural-fair-hr-decisions",
     powerbi: false,
