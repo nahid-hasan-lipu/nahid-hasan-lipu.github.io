@@ -98,7 +98,7 @@ export const projects = [
     summary:
       "A fairness-audit framework for HR machine-learning models. Turns three organisational-justice constructs — process consistency, voice, transparency — into measurable ML metrics, and benchmarks four bias-mitigation methods head-to-head with statistically rigorous testing across four real HR datasets.",
     stat: "Awarded Grade A · 4 datasets, 4 bias-mitigation methods compared",
-    tech: ["Python", "scikit-learn", "SHAP", "Statistical Testing"],
+    tech: ["Python", "scikit-learn", "SHAP", "AIF360", "Statistical Testing"],
     repo: "https://github.com/nahid-hasan-lipu/procedural-fair-hr-decisions",
     powerbi: false,
   },
