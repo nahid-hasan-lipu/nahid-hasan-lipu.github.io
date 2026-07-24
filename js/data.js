@@ -63,7 +63,7 @@ export const skillGroups = [
   {
     category: "Machine Learning & AI",
     description: "Building and explaining predictive models — from classical ML to deep learning and the fairness auditing that's the focus of my Master's thesis.",
-    items: ["Machine Learning", "scikit-learn", "XGBoost", "PyTorch", "Deep Learning", "Artificial Intelligence (AI)", "Explainable AI", "SHAP (SHapley Additive exPlanations)"],
+    items: ["Machine Learning", "scikit-learn", "XGBoost", "PyTorch", "Deep Learning", "Artificial Intelligence (AI)", "Explainable AI", "SHAP (SHapley Additive exPlanations)", "AIF360"],
   },
   {
     category: "Statistical Analysis & Research",
