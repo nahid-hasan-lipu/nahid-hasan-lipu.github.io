@@ -5,8 +5,8 @@ import { renderNav, initProgressBar, initScrollArrows } from "../nav.js";
 renderNav("education");
 initProgressBar();
 
-// Oldest first — a journey arriving at "now".
-const journey = [...education].reverse();
+// Most recent first, matching data.js order.
+const journey = [...education];
 const beatCount = 1 + journey.length;
 
 document.getElementById("road-beats").innerHTML = journey
