@@ -35,6 +35,13 @@ const navCards = [
     icon: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>`,
   },
   {
+    href: "certifications.html",
+    color: 0xf4c95d,
+    title: "Certifications",
+    desc: "11 verified credentials — AWS, Kaggle, and Google Skills.",
+    icon: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg>`,
+  },
+  {
     href: "projects.html",
     color: 0x4dd0e1,
     title: "Projects",

@@ -29,6 +29,13 @@ body[data-theme="skills"] {
   --card-bg: rgba(22, 14, 34, 0.62);
 }
 
+body[data-theme="certifications"] {
+  --bg: #150f04;
+  --accent: #f4c95d;
+  --accent-soft: rgba(244, 201, 93, 0.16);
+  --card-bg: rgba(28, 22, 10, 0.62);
+}
+
 body[data-theme="projects"] {
   --bg: #0a1014;
   --accent: #4dd0e1;
