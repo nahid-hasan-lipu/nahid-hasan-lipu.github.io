@@ -18,7 +18,7 @@ export const profile = {
 
 export const personalInfo = {
   nationality: "Bangladeshi",
-  workRights: "Post-Study Work Visa (3 years, open work permit) — full NZ work rights, no employer sponsorship required",
+  workRights: "Post-Study Work Visa (open work permit, valid until August 2029) — full NZ work rights, no employer sponsorship required",
   location: "Auckland, New Zealand",
   languages: ["Bengali (native)", "English (fluent)", "Hindi"],
   interests: ["Badminton", "Chess & strategy puzzles", "Photography", "Exploring New Zealand's outdoors"],
