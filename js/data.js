@@ -9,7 +9,7 @@ export const profile = {
   tagline:
     "Master of Applied Technologies (Data Analytics), Unitec Institute of Technology, Auckland — with a Computer Science & Engineering background and two and a half years of hands-on data work inside a live US healthcare EHR system.",
   about:
-    "I turn messy, real-world data into decisions. My background bridges Computer Science & Engineering with two and a half years working hands-on inside a live US healthcare EHR system at Augmedix, followed by a Master's in Data Analytics at Unitec in Auckland, where my thesis on procedural fairness in HR machine learning was awarded a Grade A. Every project on this site uses real public or official datasets, cleaned and analysed end-to-end in Python, with interactive dashboards in Streamlit and Power BI. I'm open to data analytics roles across any domain — business, financial, or healthcare — in New Zealand.",
+    "I turn messy, real-world data into decisions. My background bridges Computer Science & Engineering with two and a half years working hands-on inside a live US healthcare EHR system at Augmedix — where, beyond the core documentation role, I independently built automated workflow processes and configured provider-preference settings in the platform — followed by a Master's in Data Analytics at Unitec in Auckland, where my thesis on procedural fairness in HR machine learning was awarded a Grade A. Every project on this site uses real public or official datasets, cleaned and analysed end-to-end in Python, with interactive dashboards in Streamlit and Power BI. I'm open to data analytics roles across any domain — business, financial, or healthcare — in New Zealand.",
   email: "lipunahidhasan@gmail.com",
   phone: "+64 22 456 1172",
   github: "https://github.com/nahid-hasan-lipu",
@@ -77,7 +77,7 @@ export const skillGroups = [
   },
   {
     category: "Healthcare Data & Compliance",
-    description: "Two and a half years working inside a live US healthcare EHR system, with the compliance discipline that requires.",
+    description: "Two and a half years working inside a live US healthcare EHR system, including independently building workflow-automation and provider-preference configuration beyond the core documentation role, with the compliance discipline that requires.",
     items: ["Electronic Health Records (EHR)", "Medical Scribing", "HIPAA", "Process Quality Improvement", "Process Automation"],
   },
   {
